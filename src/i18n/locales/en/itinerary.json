@@ -1,0 +1,10 @@
+{
+  "trip_header": "Your trip to",
+  "travelers_count": "{{count}} Travelers",
+  "loading_itinerary": "Loading your itinerary...",
+  "building_itinerary": "Building your itinerary…",
+  "building_subtitle": "Our AI is crafting a personalised day-by-day plan. This takes ~30 seconds.",
+  "no_itinerary": "No itinerary yet",
+  "no_itinerary_desc": "Create a trip to get started with your travel planning.",
+  "no_activities": "No activities planned"
+}

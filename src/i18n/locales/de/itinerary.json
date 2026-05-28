@@ -1,0 +1,10 @@
+{
+  "trip_header": "Ihre Reise nach",
+  "travelers_count": "{{count}} Reisende",
+  "loading_itinerary": "Ihre Reiseroute wird geladen...",
+  "building_itinerary": "Ihre Reiseroute wird erstellt…",
+  "building_subtitle": "Unsere KI erstellt einen personalisierten Tagesplan. Dies dauert etwa 30 Sekunden.",
+  "no_itinerary": "Noch keine Reiseroute",
+  "no_itinerary_desc": "Erstellen Sie eine Reise, um mit der Planung zu beginnen.",
+  "no_activities": "Keine Aktivitäten geplant"
+}

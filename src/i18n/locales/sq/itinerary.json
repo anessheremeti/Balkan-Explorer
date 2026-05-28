@@ -1,0 +1,10 @@
+{
+  "trip_header": "Udhëtimi juaj në",
+  "travelers_count": "{{count}} Udhëtarë",
+  "loading_itinerary": "Duke ngarkuar itinerarin tuaj...",
+  "building_itinerary": "Duke ndërtuar itinerarin tuaj…",
+  "building_subtitle": "AI jonë po krijon një plan të personalizuar ditë pas dite. Kjo zgjat ~30 sekonda.",
+  "no_itinerary": "Nuk ka itinerar ende",
+  "no_itinerary_desc": "Krijo një udhëtim për të filluar planifikimin.",
+  "no_activities": "Nuk ka aktivitete të planifikuara"
+}

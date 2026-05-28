@@ -1,0 +1,23 @@
+{
+  "back_to_dashboard": "Kthehu në panel",
+  "title": "Cilësimet e aplikacionit",
+  "description": "Personalizoni përvojën tuaj dhe menaxhoni preferencat.",
+  "appearance_section": "Pamja",
+  "appearance_description": "Zgjidhni temën tuaj të preferuar",
+  "light_mode": "Mënyra e ndritshme",
+  "dark_mode": "Mënyra e errët",
+  "notifications_section": "Njoftimet",
+  "notifications_description": "Kontrolloni njoftimet tuaja",
+  "email": "Email",
+  "push": "Push",
+  "marketing": "Marketing",
+  "privacy_section": "Privatësia",
+  "privacy_description": "Menaxhoni shikueshmërinë tuaj",
+  "public_profile": "Profil publik",
+  "show_location": "Shfaq vendndodhjen",
+  "language_section": "Gjuha",
+  "language_description": "Zgjidhni gjuhën e ndërfaqes",
+  "lang_en": "Anglisht",
+  "lang_sq": "Shqip",
+  "lang_de": "Gjermanisht"
+}

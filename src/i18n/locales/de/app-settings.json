@@ -1,0 +1,23 @@
+{
+  "back_to_dashboard": "Zurück zum Dashboard",
+  "title": "App-Einstellungen",
+  "description": "Personalisieren Sie Ihr Erlebnis und verwalten Sie Ihre Einstellungen.",
+  "appearance_section": "Erscheinungsbild",
+  "appearance_description": "Wählen Sie Ihr bevorzugtes Design",
+  "light_mode": "Heller Modus",
+  "dark_mode": "Dunkler Modus",
+  "notifications_section": "Benachrichtigungen",
+  "notifications_description": "Verwalten Sie Ihre Benachrichtigungen",
+  "email": "E-Mail",
+  "push": "Push",
+  "marketing": "Marketing",
+  "privacy_section": "Privatsphäre",
+  "privacy_description": "Verwalten Sie Ihre Sichtbarkeit",
+  "public_profile": "Öffentliches Profil",
+  "show_location": "Standort anzeigen",
+  "language_section": "Sprache",
+  "language_description": "Sprache der Benutzeroberfläche wählen",
+  "lang_en": "Englisch",
+  "lang_sq": "Albanisch",
+  "lang_de": "Deutsch"
+}

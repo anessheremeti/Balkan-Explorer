@@ -1,0 +1,23 @@
+{
+  "back_to_dashboard": "Back to Dashboard",
+  "title": "Application Settings",
+  "description": "Customize your experience and manage your preferences.",
+  "appearance_section": "Appearance",
+  "appearance_description": "Choose your preferred theme",
+  "light_mode": "Light Mode",
+  "dark_mode": "Dark Mode",
+  "notifications_section": "Notifications",
+  "notifications_description": "Control your notifications",
+  "email": "Email",
+  "push": "Push",
+  "marketing": "Marketing",
+  "privacy_section": "Privacy",
+  "privacy_description": "Manage your visibility",
+  "public_profile": "Public Profile",
+  "show_location": "Show Location",
+  "language_section": "Language",
+  "language_description": "Choose interface language",
+  "lang_en": "English",
+  "lang_sq": "Shqip",
+  "lang_de": "Deutsch"
+}
