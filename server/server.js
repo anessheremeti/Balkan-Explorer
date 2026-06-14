@@ -5,7 +5,8 @@ import path     from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 
-// Always load server/.env regardless of working directory
+// Load server/.env when running locally. In production (Railway) the platform
+// injects variables directly into process.env, so dotenv is a no-op there.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -17,16 +18,27 @@ import { generateAIThemes, deterministicThemes, aiModelHealth } from './lib/ai-t
 import { searchPhotos, normaliseQuery }           from './lib/photos.js';
 import { geocodeCity }                            from './lib/providers/nominatim.js';
 
+// ─── Startup validation ───────────────────────────────────────────────────────
+// Accept both SUPABASE_URL (preferred, server-only) and the legacy
+// VITE_SUPABASE_URL name so existing local setups keep working.
+const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const REQUIRED = { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: SUPABASE_KEY };
+const missing  = Object.entries(REQUIRED).filter(([, v]) => !v).map(([k]) => k);
+if (missing.length) {
+  console.error(`[server] Missing required environment variables: ${missing.join(', ')}`);
+  console.error('[server] Set them in Railway → Variables (production) or server/.env (local).');
+  process.exit(1);
+}
+
 // ─── App ─────────────────────────────────────────────────────────────────────
 
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:5173' }));
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
