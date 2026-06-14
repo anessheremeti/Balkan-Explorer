@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import {
-  Bell,
-  Shield,
   Globe,
   Moon,
   Sun,
@@ -88,26 +86,6 @@ const AppSettings: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const toggleNotification = (key: keyof Settings["notifications"]) => {
-    setSettings(prev => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [key]: !prev.notifications[key]
-      }
-    }));
-  };
-
-  const togglePrivacy = (key: keyof Settings["privacy"]) => {
-    setSettings(prev => ({
-      ...prev,
-      privacy: {
-        ...prev.privacy,
-        [key]: !prev.privacy[key]
-      }
-    }));
-  };
 
   const handleThemeChange = (nextTheme: "light" | "dark") => {
     setSettings(prev => ({
