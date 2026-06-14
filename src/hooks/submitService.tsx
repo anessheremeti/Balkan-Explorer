@@ -1,4 +1,5 @@
 import { supabase } from "../../createClient";
+import { API_BASE } from "../constants/api";
 
 export interface TripData {
   title: string;
@@ -22,7 +23,7 @@ export const migrateGuestTrips = async (authenticatedUserId: string): Promise<vo
   if (!guestId || !authenticatedUserId) return;
 
   try {
-    const res = await fetch("http://localhost:3001/api/trips/migrate-guest", {
+    const res = await fetch(`${API_BASE}/api/trips/migrate-guest`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ guestId, userId: authenticatedUserId }),
@@ -49,7 +50,7 @@ const submitServiceWithItineraryFast = async (tripData: TripData) => {
   const userId = sessionStorage.getItem("user_id"); // null for guests
   const guestId = localStorage.getItem("guest_id"); // always set for guests
   try {
-    const response = await fetch("http://localhost:3001/api/trips/create-fast", {
+    const response = await fetch(`${API_BASE}/api/trips/create-fast`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -85,7 +86,7 @@ const pollItineraryCompletion = async (
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/trips/${tripId}/itinerary-status`
+        `${API_BASE}/api/trips/${tripId}/itinerary-status`
       );
       const { ready } = await response.json();
 
@@ -110,10 +111,10 @@ const pollItineraryCompletion = async (
  * NEW: Call backend endpoint to create trip + generate + save itinerary
  */
 const submitServiceWithItinerary = async (tripData: TripData) => {
-  const guestId = localStorage.getItem('guest_id')
+ // const guestId = localStorage.getItem('guest_id')
  //let  guest_id = guestId
   try {
-    const response = await fetch("http://localhost:3001/api/trips/create-with-itinerary", {
+    const response = await fetch(`${API_BASE}/api/trips/create-with-itinerary`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -9,13 +9,12 @@ interface LogoutModalProps {
 
 export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
   const navigate = useNavigate();
-  const modalRef = useRef(null);
+  const modalRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
 
   // ESC close + focus
   useEffect(() => {
-
-    const handleEsc = (e) => {
+    const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
 
@@ -31,7 +30,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
   }, [isOpen, onClose]);
 
   // backdrop close
-  const handleBackdropClick = (e) => {
+  const handleBackdropClick = (e:React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose();
   };
 

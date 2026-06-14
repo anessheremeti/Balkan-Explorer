@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+//import { motion } from 'motion/react';
 import { User, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SettingsSection from '../../components/settings/SettingsSection';

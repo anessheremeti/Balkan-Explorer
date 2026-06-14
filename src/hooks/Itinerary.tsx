@@ -8,7 +8,7 @@ export const usersService = () => {
 
   const getItineraryDays = async (tripId:string) => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("itinerary_days")
         .select("*")
         .eq("trip_id",tripId)

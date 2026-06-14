@@ -142,12 +142,12 @@ export async function getItineraryByTripId(
     }
 
     // ✅ Sort days by day_number ASC
-    const sortedDays = (tripData.itinerary_days || []).sort(
+    const sortedDays = ((tripData.itinerary_days || []) as ItineraryDay[]).sort(
       (a, b) => a.day_number - b.day_number
     );
 
     // ✅ Sort items within each day by start_time ASC
-    const daysWithSortedItems = sortedDays.map((day) => ({
+    const daysWithSortedItems = sortedDays.map((day: ItineraryDay) => ({
       ...day,
       itinerary_items: (day.itinerary_items || []).sort((a, b) => {
         // Compare time strings (HH:MM:SS format)

@@ -1,6 +1,5 @@
 import {
   MapPin,
-  Map,
   Car,
   Bus,
   Building2,
@@ -12,25 +11,29 @@ import {
   Euro,
   PoundSterling as Pound,
 } from "lucide-react";
-import React, { useState, useRef, useMemo } from "react";
-import { Autocomplete, useJsApiLoader } from "@react-google-maps/api";
+import React, { useState, useMemo } from "react";
 
 import Navbar from "../../components/Navbar/Navbar";
 import PlanSection from "../PlanSection";
 import Footer from "../../components/Footer/Footer";
 import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
-
-const MAPS_LIBRARIES: ("maps" | "places")[] = ["maps", "places"];
+import {
+  isDestinationAllowed,
+  ALLOWED_COUNTRIES,
+  findDestinationOption,
+} from "../../constants/allowedDestinations";
+import DestinationCombobox from "../../components/DestinationCombobox/DestinationCombobox";
 
 type TravelStyle = "road" | "bus" | "resort";
 type Currency = "USD" | "EUR" | "GBP";
 
 const userId = sessionStorage.getItem("user_id");
- 
- interface MainpageProps {
+
+interface MainpageProps {
   onTripCreated?: (tripId: string) => void;
- }
+}
+
 type Errors = {
   starting_location?: string;
   destination?: string;
@@ -52,68 +55,59 @@ function deriveDuration(start: string, end: string): number {
 const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const { theme } = useTheme();
   const { t } = useTranslation();
-  
-  // Create travel styles with translations - recreated when language changes
-  const TRAVEL_STYLES = useMemo(() => [
-    { id: "road", label: t('road_trip'), icon: Car },
-    { id: "bus", label: t('budget_bus'), icon: Bus },
-    { id: "resort", label: t('resort_stay'), icon: Building2 },
-  ], [t]);
+
+  const TRAVEL_STYLES = useMemo(
+    () => [
+      { id: "road", label: t("road_trip"), icon: Car },
+      { id: "bus", label: t("budget_bus"), icon: Bus },
+      { id: "resort", label: t("resort_stay"), icon: Building2 },
+    ],
+    [t]
+  );
 
   const isDark = theme === "dark";
-  const seletedDestination = JSON.parse(localStorage.getItem("selectedDestination") || "null");
 
   const today = toDateString(new Date());
   const defaultReturn = toDateString(new Date(Date.now() + 7 * 86_400_000));
   const [starting_date, setStartingDate] = useState<string>(today);
   const [returning_date, setReturningDate] = useState<string>(defaultReturn);
+  const [starting_location, setStarting_location] = useState<string>("Pejë, Kosovo");
 
-  const [starting_location, setStarting_location] =
-    useState<string>("Pejë, Kosovo");
-  const [destination, setDestination] = useState<string>(seletedDestination || "");
-  const [destinationConfirmed, setDestinationConfirmed] = useState<boolean>(!!seletedDestination);
+  // Pre-fill destination from Destinations page click — resolve to dataset entry if possible
+  const [destination, setDestination] = useState<string>(() => {
+    const stored: string | null = JSON.parse(
+      localStorage.getItem("selectedDestination") || "null"
+    );
+    return findDestinationOption(stored ?? "")?.value ?? stored ?? "";
+  });
+  const [destinationConfirmed, setDestinationConfirmed] = useState<boolean>(() => {
+    const stored: string | null = JSON.parse(
+      localStorage.getItem("selectedDestination") || "null"
+    );
+    return stored ? !!findDestinationOption(stored) : false;
+  });
+
   const [travelers, setTravelers] = useState<number>(2);
   const [travel_style, setStyle] = useState<TravelStyle>("road");
-  const [budget_total, setBudget_total] = useState<number>(0);
+  const [budget_total, setBudget_total] = useState<number>(500);
   const [currency, setCurrency] = useState<Currency>("USD");
 
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
   const [pendingTripId, setPendingTripId] = useState<string | null>(null);
 
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries: MAPS_LIBRARIES,
-  });
-
-  const onPlaceChanged = () => {
-    const place = autocompleteRef.current?.getPlace();
-    if (place?.name) {
-      setDestination(place.formatted_address ?? place.name);
-      setDestinationConfirmed(true);
-      setErrors((prev) => ({ ...prev, destination: undefined }));
-    }
-  };
-
-  const increaseTravelers = () =>
-    setTravelers((prev) => Math.min(prev + 1, 20));
-
+  const increaseTravelers = () => setTravelers((prev) => Math.min(prev + 1, 20));
   const decreaseTravelers = () => setTravelers((prev) => Math.max(1, prev - 1));
 
-  const guestId = localStorage.getItem("guest_id")
-
-  if(!guestId){
+  const guestId = localStorage.getItem("guest_id");
+  if (!guestId) {
     const id = crypto.randomUUID();
     localStorage.setItem("guest_id", id);
   }
 
   const CurrencyIcon = () => {
-    if (currency === "USD")
-      return <DollarSign size={18} className="text-emerald-500" />;
-    if (currency === "EUR")
-      return <Euro size={18} className="text-emerald-500" />;
+    if (currency === "USD") return <DollarSign size={18} className="text-emerald-500" />;
+    if (currency === "EUR") return <Euro size={18} className="text-emerald-500" />;
     return <Pound size={18} className="text-emerald-500" />;
   };
 
@@ -127,7 +121,13 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
     if (!destination.trim()) {
       newErrors.destination = "Destination is required";
     } else if (!destinationConfirmed) {
-      newErrors.destination = "Please select a destination from the suggestions";
+      newErrors.destination = "Please select a destination from the list";
+    } else if (!isDestinationAllowed(destination)) {
+      newErrors.destination = `Only destinations in ${ALLOWED_COUNTRIES.join(", ")} are supported`;
+    }
+
+    if (budget_total < 500) {
+      newErrors.budget_total = "Budget should be at least 500";
     }
 
     if (!starting_date) {
@@ -169,13 +169,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
         currency,
       };
 
-      // ✅ Use FAST endpoint that returns in ~1-2 seconds
       const { submitServiceWithItineraryFast } =
         await import("../../hooks/submitService");
       const result = await submitServiceWithItineraryFast(formData);
-      console.log(formData)
+      console.log(formData);
       if (result?.trip?.id) {
-        // Reset form
         setStartingDate(today);
         setReturningDate(defaultReturn);
         setTravelers(2);
@@ -183,8 +181,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
         setBudget_total(0);
         setCurrency("USD");
         setErrors({});
-      localStorage.removeItem("selectedDestination");
-        // Tell Timeline to start polling for this trip's itinerary
+        localStorage.removeItem("selectedDestination");
         setPendingTripId(result.trip.id);
         onTripCreated?.(result.trip.id);
       }
@@ -199,9 +196,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   };
 
   return (
-    <div
-      className={`w-full min-h-screen ${isDark ? "bg-slate-950" : "bg-white"}`}
-    >
+    <div className={`w-full min-h-screen ${isDark ? "bg-slate-950" : "bg-white"}`}>
       <Navbar />
 
       <main className={`${isDark ? "bg-slate-950" : "bg-white"}`}>
@@ -213,16 +208,12 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                 isDark ? "text-slate-50" : "text-gray-900"
               }`}
             >
-              {t('discover the hidden Balkans')}
+              {t("discover the hidden Balkans")}
               <span className="block text-indigo-600">Hidden Balkans</span>
             </h1>
 
-            <p
-              className={`text-lg sm:text-xl max-w-2xl ${
-                isDark ? "text-slate-400" : "text-gray-600"
-              }`}
-            >
-              {t('create a personalized itenary')}
+            <p className={`text-lg sm:text-xl max-w-2xl ${isDark ? "text-slate-400" : "text-gray-600"}`}>
+              {t("create a personalized itenary")}
             </p>
           </div>
         </section>
@@ -235,19 +226,15 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
             <form
               onSubmit={onSubmitHandler}
               className={`border rounded-b-2xl shadow-lg p-5 sm:p-8 lg:p-10 space-y-8 ${
-                isDark
-                  ? "bg-slate-900 border-slate-700"
-                  : "bg-white border-slate-200"
+                isDark ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
               }`}
             >
               {/* FROM + DESTINATION */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* FROM */}
                 <div className="space-y-2">
-                  <label
-                    className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}
-                  >
-                    {t('starting_from')}
+                  <label className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
+                    {t("starting_from")}
                   </label>
 
                   <div className="relative">
@@ -255,19 +242,17 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                       size={18}
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-500 pointer-events-none"
                     />
-
                     <input
                       type="text"
                       value={starting_location}
                       onChange={(e) => setStarting_location(e.target.value)}
-                      placeholder={t('where')}
+                      placeholder={t("where")}
                       className={`w-full pl-10 pr-24 py-3 rounded-xl border ${
                         isDark
                           ? "bg-slate-800 text-slate-500 border-slate-700"
                           : "bg-slate-50 border-slate-200"
                       }`}
                     />
-
                     <button
                       type="button"
                       className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-sky-100 text-sky-700"
@@ -278,9 +263,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                   </div>
 
                   {errors.starting_location && (
-                    <p
-                      className={`text-red-500 text-xs ${isDark ? "text-red-400" : "text-red-500"}`}
-                    >
+                    <p className={`text-xs ${isDark ? "text-red-400" : "text-red-500"}`}>
                       {errors.starting_location}
                     </p>
                   )}
@@ -288,59 +271,27 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
                 {/* DESTINATION */}
                 <div className="space-y-2">
-                  <label
-                    className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}
-                  >
-                    {t('destination')}
+                  <label className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
+                    {t("destination")}
+                    <span className={`ml-2 text-xs font-normal ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                      Kosovo · Albania · North Macedonia · Montenegro
+                    </span>
                   </label>
 
-                  <div className="relative">
-                    <Map
-                      size={18}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none z-10"
-                    />
-
-                    {isLoaded ? (
-                      <Autocomplete
-                        onLoad={(ac) => { autocompleteRef.current = ac; }}
-                        onPlaceChanged={onPlaceChanged}
-                        types={["(cities)"]}
-                      >
-                        <input
-                          type="text"
-                          value={destination}
-                          onChange={(e) => {
-                            setDestination(e.target.value);
-                            setDestinationConfirmed(false);
-                          }}
-                          placeholder={t('where')}
-                          className={`w-full pl-10 pr-4 py-3 rounded-xl border ${
-                            isDark
-                              ? "bg-slate-800 text-slate-300 border-slate-700"
-                              : "bg-slate-50 border-slate-200"
-                          }`}
-                        />
-                      </Autocomplete>
-                    ) : (
-                      <input
-                        type="text"
-                        value={destination}
-                        onChange={(e) => setDestination(e.target.value)}
-                        placeholder={t('where')}
-                        disabled
-                        className={`w-full pl-10 pr-4 py-3 rounded-xl border opacity-60 ${
-                          isDark
-                            ? "bg-slate-800 text-slate-300 border-slate-700"
-                            : "bg-slate-50 border-slate-200"
-                        }`}
-                      />
-                    )}
-                  </div>
+                  <DestinationCombobox
+                    value={destination}
+                    confirmed={destinationConfirmed}
+                    onChange={(val, isConfirmed) => {
+                      setDestination(val);
+                      setDestinationConfirmed(isConfirmed);
+                      if (isConfirmed) setErrors((prev) => ({ ...prev, destination: undefined }));
+                    }}
+                    isDark={isDark}
+                    hasError={!!errors.destination}
+                  />
 
                   {errors.destination && (
-                    <p
-                      className={`text-red-500 text-xs ${isDark ? "text-red-400" : "text-red-500"}`}
-                    >
+                    <p className={`text-xs ${isDark ? "text-red-400" : "text-red-500"}`}>
                       {errors.destination}
                     </p>
                   )}
@@ -353,11 +304,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
-                      {t('dates')}
+                      {t("dates")}
                     </label>
                     {starting_date && returning_date && returning_date > starting_date && (
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sky-100 text-sky-600">
-                        {deriveDuration(starting_date, returning_date)} {t('days')}
+                        {deriveDuration(starting_date, returning_date)} {t("days")}
                       </span>
                     )}
                   </div>
@@ -365,7 +316,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <span className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                        {t('departure')}
+                        {t("departure")}
                       </span>
                       <input
                         type="date"
@@ -374,7 +325,9 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                         onChange={(e) => {
                           setStartingDate(e.target.value);
                           if (returning_date && returning_date <= e.target.value) {
-                            setReturningDate(toDateString(new Date(new Date(e.target.value).getTime() + 86_400_000)));
+                            setReturningDate(
+                              toDateString(new Date(new Date(e.target.value).getTime() + 86_400_000))
+                            );
                           }
                           setErrors((prev) => ({ ...prev, starting_date: undefined }));
                         }}
@@ -391,12 +344,16 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
                     <div className="space-y-1">
                       <span className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                        {t('return')}
+                        {t("return")}
                       </span>
                       <input
                         type="date"
                         value={returning_date}
-                        min={starting_date ? toDateString(new Date(new Date(starting_date).getTime() + 86_400_000)) : today}
+                        min={
+                          starting_date
+                            ? toDateString(new Date(new Date(starting_date).getTime() + 86_400_000))
+                            : today
+                        }
                         onChange={(e) => {
                           setReturningDate(e.target.value);
                           setErrors((prev) => ({ ...prev, returning_date: undefined }));
@@ -416,38 +373,22 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
                 {/* TRAVELERS */}
                 <div className="space-y-2">
-                  <label
-                    className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}
-                  >
-                    {t('travelers')}
+                  <label className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
+                    {t("travelers")}
                   </label>
 
                   <div
                     className={`flex items-center mt-6 justify-between border rounded-xl p-2 ${
-                      isDark
-                        ? "bg-slate-800 border-slate-700"
-                        : "bg-slate-50 border-slate-200"
+                      isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
                     }`}
                   >
-                    <button
-                      type="button"
-                      onClick={decreaseTravelers}
-                      className="p-2"
-                    >
+                    <button type="button" onClick={decreaseTravelers} className="p-2">
                       <Minus size={16} />
                     </button>
-
-                    <span
-                      className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}
-                    >
-                      {travelers} 
+                    <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
+                      {travelers}
                     </span>
-
-                    <button
-                      type="button"
-                      onClick={increaseTravelers}
-                      className="p-2"
-                    >
+                    <button type="button" onClick={increaseTravelers} className="p-2">
                       <Plus size={16} />
                     </button>
                   </div>
@@ -456,32 +397,25 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
               {/* TRAVEL STYLE */}
               <div className="space-y-3">
-                <label
-                  className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}
-                >
-                  {t('travelStyle')}
+                <label className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
+                  {t("travelStyle")}
                 </label>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {TRAVEL_STYLES.map(({ id, label, icon: Icon }) => {
                     const active = travel_style === id;
-
                     return (
                       <button
                         type="button"
                         key={id}
                         onClick={() => setStyle(id as TravelStyle)}
-                        className={`
-          flex items-center justify-center gap-2 py-3 rounded-xl border transition-all duration-200 hover:cursor-pointer
-          
-          ${
-            active
-              ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
-              : isDark
-                ? "bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800"
-                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
-          }
-        `}
+                        className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all duration-200 hover:cursor-pointer ${
+                          active
+                            ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                            : isDark
+                            ? "bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800"
+                            : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
+                        }`}
                       >
                         <Icon size={20} />
                         <span className="font-medium">{label}</span>
@@ -493,17 +427,14 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
               {/* BUDGET */}
               <div className="space-y-2">
-                <label
-                  className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}
-                >
-                  {t('your budget')}
+                <label className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
+                  {t("your budget")}
                 </label>
 
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2">
                     <CurrencyIcon />
                   </div>
-
                   <input
                     type="number"
                     value={budget_total}
@@ -515,7 +446,6 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                         : "bg-slate-50 border-slate-200"
                     }`}
                   />
-
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as Currency)}
@@ -532,13 +462,13 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                 )}
               </div>
 
-              {/* BUTTON */}
+              {/* SUBMIT */}
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-4 rounded-xl hover:cursor-pointer font-semibold hover:bg-slate-800 active:scale-[0.98] transition disabled:opacity-50"
               >
-                {loading ? "Creating..." : t('discover the hidden Balkans')}
+                {loading ? "Creating..." : t("discover the hidden Balkans")}
                 <Wand2 className="text-sky-400" size={18} />
               </button>
             </form>

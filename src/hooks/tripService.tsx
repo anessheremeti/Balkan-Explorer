@@ -1,5 +1,5 @@
 import { supabase } from "../../createClient";
-import type { Trip } from "./itineraryService";
+//mport type { Trip } from "./itineraryService";
 
 const tripService = async () => {
   const getTrips = async () => {

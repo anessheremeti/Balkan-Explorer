@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Star, MapPin, Calendar, Globe, DollarSign } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import ImageGallery from "../../components/ImageGallery/ImageGallery";
@@ -14,6 +15,7 @@ const DestinationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { t } = useTranslation("pages");
   const isDark = theme === "dark";
 
   const [destination, setDestination] = useState<Destination | null>(null);
@@ -85,10 +87,10 @@ const DestinationDetail: React.FC = () => {
         <div className={`flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-20 text-center`}>
           <div className={`inline-block p-8 rounded-lg ${isDark ? "bg-slate-800" : "bg-slate-100"}`}>
             <h1 className={`text-2xl font-bold mb-4 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
-              {error || "Destination Not Found"}
+              {error || t("dest_detail_not_found_title")}
             </h1>
             <p className={`mb-6 ${isDark ? "text-slate-400" : "text-slate-600"}`}>
-              {error ? "Unable to load destination details." : "The destination you're looking for doesn't exist."}
+              {error ? t("dest_detail_error_desc") : t("dest_detail_not_found_desc")}
             </p>
             <motion.button
               onClick={handleBack}
@@ -97,7 +99,7 @@ const DestinationDetail: React.FC = () => {
               className="inline-flex items-center space-x-2 bg-[#0ea5e9] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#0ea5e9]/90 transition-colors"
             >
               <ArrowLeft size={18} />
-              <span>Go Back</span>
+              <span>{t("dest_detail_go_back")}</span>
             </motion.button>
           </div>
         </div>
@@ -125,7 +127,7 @@ const DestinationDetail: React.FC = () => {
           whileTap={{ scale: 0.95 }}
         >
           <ArrowLeft size={18} />
-          <span className="text-sm font-semibold hidden sm:inline">Back</span>
+          <span className="text-sm font-semibold hidden sm:inline">{t("dest_detail_back")}</span>
         </motion.button>
 
         {/* Content Container */}
@@ -151,7 +153,7 @@ const DestinationDetail: React.FC = () => {
           >
             {/* Breadcrumb */}
             <div className="flex items-center space-x-2 text-sm">
-              <span className={isDark ? "text-slate-400" : "text-slate-500"}>Destinations</span>
+              <span className={isDark ? "text-slate-400" : "text-slate-500"}>{t("dest_detail_breadcrumb")}</span>
               <span className={isDark ? "text-slate-600" : "text-slate-300"}>/</span>
               <span className="font-semibold text-[#0ea5e9]">{destination.country}</span>
             </div>
@@ -170,7 +172,7 @@ const DestinationDetail: React.FC = () => {
                   <Star size={20} className="text-yellow-500 fill-yellow-500" />
                   <span className="text-lg font-bold">{destination.rating}</span>
                   <span className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>
-                    ({destination.places_count} places)
+                    ({destination.places_count} {t("dest_detail_places")})
                   </span>
                 </div>
               )}
@@ -192,7 +194,7 @@ const DestinationDetail: React.FC = () => {
             {destination.location && (
               <InfoCard
                 icon={MapPin}
-                label="Location"
+                label={t("dest_detail_label_location")}
                 value={destination.location}
                 isDark={isDark}
               />
@@ -200,7 +202,7 @@ const DestinationDetail: React.FC = () => {
             {destination.best_time_to_visit && (
               <InfoCard
                 icon={Calendar}
-                label="Best Time"
+                label={t("dest_detail_label_best_time")}
                 value={destination.best_time_to_visit}
                 isDark={isDark}
               />
@@ -208,7 +210,7 @@ const DestinationDetail: React.FC = () => {
             {destination.language && (
               <InfoCard
                 icon={Globe}
-                label="Language"
+                label={t("dest_detail_label_language")}
                 value={destination.language}
                 isDark={isDark}
               />
@@ -216,7 +218,7 @@ const DestinationDetail: React.FC = () => {
             {destination.currency && (
               <InfoCard
                 icon={DollarSign}
-                label="Currency"
+                label={t("dest_detail_label_currency")}
                 value={destination.currency}
                 isDark={isDark}
               />
@@ -231,7 +233,7 @@ const DestinationDetail: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="space-y-6"
             >
-              <h2 className="text-3xl font-bold">Key Highlights</h2>
+              <h2 className="text-3xl font-bold">{t("dest_detail_highlights")}</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {destination.highlights.map((highlight, index) => (
                   <motion.div
@@ -271,7 +273,7 @@ const DestinationDetail: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               className="flex-1 bg-[#0ea5e9] text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-[#0ea5e9]/90 transition-colors"
             >
-              Plan Trip to {destination.name}
+              {t("dest_detail_plan_trip", { name: destination.name })}
             </motion.button>
             <motion.button
               onClick={handleBack}
@@ -283,7 +285,7 @@ const DestinationDetail: React.FC = () => {
                   : "border-slate-300 text-slate-900 hover:bg-slate-50"
               }`}
             >
-              Back to Destinations
+              {t("dest_detail_back_to_list")}
             </motion.button>
           </motion.div>
         </div>

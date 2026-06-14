@@ -14,17 +14,20 @@ import HowItWorks from './pages/HowItWorks';
 import ScrollToTop from './hooks/scrollToTop';
 import AppSettings from './pages/AppSettings/AppSettings';
 import AccountSettings from './pages/AccountSettings/AccountSettings';
-import {useState} from 'react';
+import ForgotPassword from './pages/ForgotPassword/ForgotPassword';
+import ResetPassword from './pages/ResetPassword/ResetPassword';
+import MyTravels from './pages/MyTravels/MyTravels';
 function App() {
-  const [isClicked, setIsClicked] = useState(false);
   return (
     <>
-    
+
     <ScrollToTop />
     <Routes>
-      <Route path="/" element={<Mainpage isClicked={isClicked} />} />
+      <Route path="/" element={<Mainpage />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/community" element={<CommunityPage />} />
       <Route path='contact' element={<ContactUs />} />
       <Route path='/destinations' element={<DestinationsPage />} />
@@ -34,7 +37,8 @@ function App() {
       <Route path='/about' element={<AboutUsPage />} />
       <Route path='/travel-tips' element={<TravelTipsPage />} />
       <Route path='/app-settings' element={<AppSettings />} />
-       <Route path="account-settings" element={<AccountSettings />} /> 
+      <Route path="account-settings" element={<AccountSettings />} />
+      <Route path="/my-travels" element={<MyTravels />} />
     </Routes>
     </>
   )

@@ -30,6 +30,32 @@ const supabase = createClient(
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// ─── Destination allow-list (mirrors src/constants/allowedDestinations.ts) ─────
+const BALKAN_DESTINATIONS = [
+  { country: 'Kosovo',         cities: ['Pristina','Prizren','Pejë','Gjakova','Mitrovica','Ferizaj','Gjilan','Vushtrri','Suhareka','Rahovec','Drenas','Lipjan','Deçan','Klina','Malisheva','Kamenica'] },
+  { country: 'Albania',        cities: ['Tirana','Durrës','Shkodër','Vlorë','Elbasan','Berat','Gjirokastër','Korçë','Fier','Sarandë','Pogradec','Lushnjë','Kavajë','Lezhë','Kukës','Laç'] },
+  { country: 'North Macedonia', cities: ['Skopje','Ohrid','Bitola','Kumanovo','Tetovo','Štip','Veles','Struga','Gostivar','Kičevo','Strumica','Kavadarci','Debar','Kochani','Negotino'] },
+  { country: 'Montenegro',     cities: ['Podgorica','Budva','Kotor','Bar','Herceg Novi','Nikšić','Tivat','Ulcinj','Bijelo Polje','Pljevlja','Berane','Cetinje','Rožaje','Kolašin','Žabljak'] },
+];
+const ALLOWED_COUNTRIES = BALKAN_DESTINATIONS.map(d => d.country);
+
+function normalizeStr(s) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+function isDestinationAllowed(destination) {
+  if (!destination?.trim()) return false;
+  const norm = normalizeStr(destination);
+  return BALKAN_DESTINATIONS.some(({ country, cities }) => {
+    const cn = normalizeStr(country);
+    if (norm === cn) return true;
+    return cities.some(city => {
+      const c = normalizeStr(city);
+      return norm === c || norm === `${c}, ${cn}`;
+    });
+  });
+}
+
 app.get('/', (_req, res) => res.send('Travel Explorer API ✈️'));
 
 // ─── Itinerary Generator ─────────────────────────────────────────────────────
@@ -38,10 +64,10 @@ async function persistItinerary(tripId, days) {
   // Remove _prefixed in-memory fields; map them into the metadata jsonb column.
   const daysToInsert  = days.map(({ itinerary_items: _, ...day }) => day);
   const itemsToInsert = days.flatMap(d =>
-    d.itinerary_items.map(({ _source, _place_id, _lat, _lon, ...item }) => ({
+    d.itinerary_items.map(({ _source, _place_id, _lat, _lon, _photo_query, ...item }) => ({
       ...item,
       place_id: null,
-      metadata: { source: _source ?? 'unknown', place_id: _place_id ?? null, lat: _lat ?? null, lon: _lon ?? null },
+      metadata: { source: _source ?? 'unknown', place_id: _place_id ?? null, lat: _lat ?? null, lon: _lon ?? null, photo_query: _photo_query ?? null },
     }))
   );
 
@@ -96,7 +122,8 @@ app.post('/api/trips/create-fast', async (req, res) => {
   try {
     const { tripData, userId, guestId } = req.body;
 
-    if (!tripData?.destination)                                   return res.status(400).json({ error: 'destination is required' });
+    if (!tripData?.destination)                                    return res.status(400).json({ error: 'destination is required' });
+    if (!isDestinationAllowed(tripData.destination))              return res.status(400).json({ error: `Destination must be within the Balkan region (${ALLOWED_COUNTRIES.join(', ')})` });
     if (!tripData?.starting_date || !tripData?.returning_date)    return res.status(400).json({ error: 'starting_date and returning_date are required' });
 
     const today = new Date().toISOString().split('T')[0];

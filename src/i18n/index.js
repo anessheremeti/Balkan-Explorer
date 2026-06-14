@@ -37,13 +37,18 @@ import enPages from "./locales/en/pages.json";
 import sqPages from "./locales/sq/pages.json";
 import dePages from "./locales/de/pages.json";
 
+// destinations
+import enDestinations from "./locales/en/destinations.json";
+import sqDestinations from "./locales/sq/destinations.json";
+import deDestinations from "./locales/de/destinations.json";
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     fallbackLng: "en",
     debug: false,
-    ns: ["common", "navbar", "footer", "itinerary", "settings", "app_settings", "pages"],
+    ns: ["common", "navbar", "footer", "itinerary", "settings", "app_settings", "pages", "destinations"],
     defaultNS: "common",
 
     resources: {
@@ -55,6 +60,7 @@ i18n
         navbar: enNavbar,
         footer: enFooter,
         pages: enPages,
+        destinations: enDestinations,
       },
       sq: {
         common: sqContent,
@@ -64,6 +70,7 @@ i18n
         navbar: sqNavbar,
         footer: sqFooter,
         pages: sqPages,
+        destinations: sqDestinations,
       },
       de: {
         common: deContent,
@@ -73,6 +80,7 @@ i18n
         navbar: deNavbar,
         footer: deFooter,
         pages: dePages,
+        destinations: deDestinations,
       },
     },
 

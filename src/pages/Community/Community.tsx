@@ -1,12 +1,14 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { MessageSquare, Heart, Share2, User, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
 import { useTheme } from '../../context/ThemeContext';
 
 const CommunityPage: React.FC = () => {
   const { theme } = useTheme();
+  const { t } = useTranslation('pages');
   const isDark = theme === 'dark';
 
   const posts = [
@@ -14,30 +16,30 @@ const CommunityPage: React.FC = () => {
       id: 1,
       author: 'Arben Krasniqi',
       location: 'Theth, Albania',
-      content: 'Just finished the Valbona to Theth hike. The views are absolutely breathtaking! If anyone is planning to go, make sure to start early to avoid the midday heat.',
+      contentKey: 'community_post1_content',
       likes: 124,
       comments: 18,
-      time: '2 hours ago',
+      timeKey: 'community_time_2h',
       image: 'https://picsum.photos/seed/theth/800/400',
     },
     {
       id: 2,
       author: 'Elena Petrova',
       location: 'Ohrid, North Macedonia',
-      content: 'Found this hidden gem of a cafe right by the lake. Perfect spot for sunset watching. Ask for the traditional Turkish coffee!',
+      contentKey: 'community_post2_content',
       likes: 89,
       comments: 5,
-      time: '5 hours ago',
+      timeKey: 'community_time_5h',
       image: 'https://picsum.photos/seed/ohrid/800/400',
     },
     {
       id: 3,
       author: 'Marko Vidovic',
       location: 'Kotor, Montenegro',
-      content: 'The climb to San Giovanni Fortress is worth every step. Pro tip: Go around 7 AM to have the place almost to yourself.',
+      contentKey: 'community_post3_content',
       likes: 210,
       comments: 24,
-      time: 'Yesterday',
+      timeKey: 'community_time_yesterday',
       image: 'https://picsum.photos/seed/kotor/800/400',
     },
   ];
@@ -56,7 +58,7 @@ const CommunityPage: React.FC = () => {
                 isDark ? 'text-slate-50' : 'text-slate-900'
               }`}
             >
-              Community Stories
+              {t('community_title')}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: -10 }}
@@ -66,7 +68,7 @@ const CommunityPage: React.FC = () => {
                 isDark ? 'text-slate-400' : 'text-slate-500'
               }`}
             >
-              Connect with fellow explorers, share your experiences, and discover the Balkans through the eyes of locals and travelers.
+              {t('community_subtitle')}
             </motion.p>
           </div>
 
@@ -92,7 +94,7 @@ const CommunityPage: React.FC = () => {
                   : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'
               }`}
             >
-              Share your latest adventure...
+              {t('community_share_placeholder')}
             </button>
           </motion.div>
 
@@ -126,7 +128,7 @@ const CommunityPage: React.FC = () => {
                         isDark ? 'text-slate-400' : 'text-slate-400'
                       }`}>
                         <MapPin size={12} className="mr-1" />
-                        {post.location} • {post.time}
+                        {post.location} • {t(post.timeKey)}
                       </div>
                     </div>
                   </div>
@@ -138,7 +140,7 @@ const CommunityPage: React.FC = () => {
                 {/* Post Content */}
                 <div className="px-6 pb-4">
                   <p className={`${isDark ? 'text-slate-300' : 'text-slate-600'} leading-relaxed mb-4`}>
-                    {post.content}
+                    {t(post.contentKey)}
                   </p>
                 </div>
 
@@ -178,7 +180,7 @@ const CommunityPage: React.FC = () => {
             <button className={`px-8 py-3 rounded-xl font-bold transition-all shadow-sm border ${
               isDark ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}>
-              Load More Stories
+              {t('community_load_more')}
             </button>
           </div>
         </div>

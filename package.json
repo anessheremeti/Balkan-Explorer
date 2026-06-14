@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@googlemaps/markerclusterer": "^2.6.2",
     "@lingo.dev/compiler": "^0.4.0",
     "@react-google-maps/api": "^2.20.8",
     "@supabase/supabase-js": "^2.97.0",

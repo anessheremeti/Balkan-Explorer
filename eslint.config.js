@@ -19,5 +19,10 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Allow setState inside effects for bounded sync patterns (session restore,
+      // prop→state sync). These are single-re-render, not infinite-loop cases.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])

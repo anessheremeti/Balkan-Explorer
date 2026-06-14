@@ -191,7 +191,7 @@ const AppSettings: React.FC = () => {
             </div>
           </SettingsSection>
 
-          {/* NOTIFICATIONS */}
+          {/* NOTIFICATIONS 
           <SettingsSection
             title={t('notifications')}
             description={t('notifications_desc')}
@@ -209,8 +209,8 @@ const AppSettings: React.FC = () => {
               </div>
             ))}
           </SettingsSection>
-
-          {/* PRIVACY */}
+   */}
+          {/* PRIVACY *
           <SettingsSection
             title={t('privacy')}
             description={t('privacy_desc')}
@@ -228,7 +228,7 @@ const AppSettings: React.FC = () => {
               </div>
             ))}
           </SettingsSection>
-
+     /* }
           {/* LANGUAGE */}
           <SettingsSection
             title={t('language')}

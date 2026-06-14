@@ -112,11 +112,16 @@ export function useItemPhoto(
 ): { url: string | null; loading: boolean } {
   const { fallback, itemType, enabled = true } = options;
 
-  // Build the ordered query chain once
+  // Build the ordered query chain once.
+  // Level 1 merges the place name with the destination so "Star" in "Ulcinj"
+  // becomes "Star Ulcinj" — prevents generic keywords (star, bar, river…) from
+  // pulling completely unrelated imagery (space, cocktail, Amazon).
+  const subjectQuery = toSearchQuery(title);
+  const level1 = fallback ? `${subjectQuery} ${fallback}` : subjectQuery;
   const queries = [
-    toSearchQuery(title),
-    ...(fallback ? [fallback] : []),
-    TYPE_QUERY[itemType?.toLowerCase() ?? ""] ?? DEFAULT_TYPE_QUERY,
+    level1,                                                             // "Star Ulcinj Montenegro"
+    ...(fallback ? [fallback] : []),                                    // "Ulcinj Montenegro"
+    TYPE_QUERY[itemType?.toLowerCase() ?? ""] ?? DEFAULT_TYPE_QUERY,   // "restaurant local cuisine"
   ];
 
   const [url, setUrl] = useState<string | null>(() => fromCache(queries) ?? null);
@@ -151,10 +156,8 @@ export function useItemPhoto(
     return () => {
       cancelled = true;
     };
-    // queries is rebuilt each render but its contents only change when
-    // title / fallback / itemType change, which is equivalent
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toSearchQuery(title), fallback, itemType, enabled]);
+  }, [level1, fallback, itemType, enabled]);
 
   return { url, loading };
 }

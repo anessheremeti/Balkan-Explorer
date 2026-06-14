@@ -1,4 +1,4 @@
-import { ChevronDown, Clock, AlertCircle, Loader, Star, MapPin, Navigation } from "lucide-react";
+import { ChevronDown, Clock, Star, MapPin, Navigation, Map as MapIcon, Loader2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../../createClient";
 import { useItemPhoto } from "../../hooks/useItemPhoto";
@@ -11,22 +11,25 @@ import {
 } from "../../hooks/itineraryService";
 import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
+import { API_BASE } from "../../constants/api";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_MAX_ATTEMPTS = 75; // 150 seconds total — covers AI timeout + fallback save
 
 interface TimelineProps {
   pendingTripId?: string | null;
+  onViewOnMap?: (dayNumber: number) => void;
+  activeMapDayNumber?: number | null;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ pendingTripId }) => {
+const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeMapDayNumber }) => {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [itineraryDays, setItineraryDays] = useState<ItineraryDay[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setLoading] = useState(true);
+  const [, setError] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<number | null>(1);
   const [generating, setGenerating] = useState(false);
-  const [pollAttempt, setPollAttempt] = useState(0);
+  const [, setPollAttempt] = useState(0);
   const { theme } = useTheme();
   const { t } = useTranslation('itinerary');
 
@@ -82,7 +85,7 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId }) => {
         if (cancelled) return;
 
         try {
-          const res = await fetch(`/api/trips/${pendingTripId}/itinerary-status`);
+          const res = await fetch(`${API_BASE}/api/trips/${pendingTripId}/itinerary-status`);
           const { ready } = await res.json();
 
           setPollAttempt(attempt + 1);
@@ -91,7 +94,7 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId }) => {
             // Try in-memory fast endpoint first (no Supabase latency)
             let itinerary: { trip: Trip; days: ItineraryDay[] } | null = null;
             try {
-              const fastRes = await fetch(`/api/trips/${pendingTripId}/itinerary-fast`);
+              const fastRes = await fetch(`${API_BASE}/api/trips/${pendingTripId}/itinerary-fast`);
               if (fastRes.ok) itinerary = await fastRes.json();
             } catch { /* fall through */ }
 
@@ -126,12 +129,34 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId }) => {
   }, [pendingTripId]);
 
   // ── Generating state (AI is building the itinerary) ─────────────────────
- 
-
-  /**
-   * ✅ ERROR STATE
-   */
-
+  if (generating) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full bg-sky-50 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
+          </div>
+        </div>
+        <div>
+          <h3 className={`font-semibold text-base ${theme === 'dark' ? 'text-gray-200' : 'text-slate-800'}`}>
+            {t('generating_itinerary', 'Building your itinerary…')}
+          </h3>
+          <p className="text-sm text-slate-400 mt-1">
+            {t('generating_desc', 'Usually takes 15–30 seconds')}
+          </p>
+        </div>
+        <div className="flex gap-1.5 mt-2">
+          {[0, 1, 2].map(i => (
+            <div
+              key={i}
+              className="w-2 h-2 rounded-full bg-sky-300 animate-bounce"
+              style={{ animationDelay: `${i * 150}ms` }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   /**
    * ✅ EMPTY STATE
@@ -162,17 +187,23 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId }) => {
       <div className="space-y-4">
         {itineraryDays.map((day) => (
           <div key={day.id} className="space-y-3">
-            {/* Day Header - Clickable */}
-            <button
+            {/* Day Header */}
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() =>
                 setExpandedDay(expandedDay === day.day_number ? null : day.day_number)
               }
-              className={`w-full flex items-center justify-between group cursor-pointer hover:bg-slate-50 p-3 rounded-xl transition ${
-                theme === "dark" ? "text-gray-500  hover:bg-none" : ""
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ')
+                  setExpandedDay(expandedDay === day.day_number ? null : day.day_number);
+              }}
+              className={`w-full flex items-center justify-between group cursor-pointer p-3 rounded-xl transition ${
+                theme === "dark" ? "text-gray-500 hover:bg-slate-700/40" : "hover:bg-slate-50"
               }`}
             >
               <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold shadow-md">
+                <div className="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold shadow-md shrink-0">
                   {day.day_number}
                 </div>
                 <div className="text-left">
@@ -188,13 +219,31 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId }) => {
                   </p>
                 </div>
               </div>
-              <ChevronDown
-                size={20}
-                className={`text-slate-400 transition-transform ${
-                  expandedDay === day.day_number ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {onViewOnMap && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onViewOnMap(day.day_number); }}
+                    title="View on map"
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                      activeMapDayNumber === day.day_number
+                        ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400'
+                        : theme === 'dark'
+                        ? 'text-slate-400 hover:bg-slate-600 hover:text-slate-200'
+                        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                    }`}
+                  >
+                    <MapIcon size={13} />
+                    Map
+                  </button>
+                )}
+                <ChevronDown
+                  size={20}
+                  className={`text-slate-400 transition-transform ${
+                    expandedDay === day.day_number ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
+            </div>
 
             {/* Day Activities - Expandable */}
             {expandedDay === day.day_number && (
@@ -322,8 +371,14 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
   };
 
   const staticUrl = item.place?.image_url ?? item.metadata?.image_url;
-  const { url: fetchedUrl, loading: photoLoading } = useItemPhoto(item.title, {
-    fallback: destination,
+  // Use the pre-built contextual query from metadata if present (set at generation
+  // time, e.g. "Star cafe Ulcinj Montenegro"). For legacy items without it, the
+  // hook merges title + destination itself at Level 1.
+  const photoTitle = (item.metadata?.photo_query as string | undefined) ?? item.title;
+  const hasQueryContext = !!item.metadata?.photo_query;
+  const { url: fetchedUrl, loading: photoLoading } = useItemPhoto(photoTitle, {
+    fallback: hasQueryContext ? undefined : destination,
+    itemType: item.item_type,
     enabled: !staticUrl,
   });
   const imageUrl = staticUrl ?? fetchedUrl;

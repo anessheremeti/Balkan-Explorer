@@ -6,7 +6,7 @@ type ProfileFormValues = {
 }
 import {supabase} from '../../createClient';
 const useProfileService = (ProfileData: ProfileFormValues) => {
-    const submitProfileUpdate = async (data: ProfileFormValues) => {
+    const submitProfileUpdate = async () => {
         try {
         // Insert into Supabase table directly
         const { data, error } = await supabase

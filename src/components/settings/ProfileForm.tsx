@@ -10,7 +10,7 @@ type ProfileFormValues = {
 };
 import useProfileService from '../../hooks/useProfileService';
 const ProfileForm: React.FC = () => {
-    const userId = sessionStorage.getItem("user_id");
+    //const userId = sessionStorage.getItem("user_id");
   
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -39,7 +39,7 @@ const ProfileForm: React.FC = () => {
 
     setLoading(true);
     try {
-      const userData = await submitProfileUpdate(formData);
+      const userData = await submitProfileUpdate();
       console.log('Profile updated:', userData);
             console.log(formData)
 

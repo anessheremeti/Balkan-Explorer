@@ -23,6 +23,18 @@ const PLACE_META = {
   historic:   { type: 'activity', desc: p => `Discover ${p.name}, a site with deep local significance.` },
 };
 
+// Category label used to enrich the photo search query so generic names like
+// "Star" or "Park" don't pull unrelated imagery from photo APIs.
+const CATEGORY_PHOTO_LABEL = {
+  restaurant: 'restaurant',
+  cafe:       'cafe coffee',
+  museum:     'museum',
+  attraction: 'landmark',
+  viewpoint:  'panoramic view',
+  park:       'park garden',
+  historic:   'historic site',
+};
+
 const FALLBACK_SLOTS = {
   '08:00': d => ({ item_type: 'food',     title: 'Morning Café',          description: `Start with coffee and breakfast at a local café in ${d}.` }),
   '10:30': d => ({ item_type: 'activity', title: 'Cultural Exploration',   description: `Explore the historic and cultural sites of ${d}.` }),
@@ -59,8 +71,14 @@ function tripSeed(tripId) {
   return parseInt((tripId ?? '00000000').replace(/-/g, '').slice(0, 8), 16);
 }
 
-function buildItem(place, time, dayId) {
-  const meta = PLACE_META[place.category] ?? { type: 'activity', desc: p => `Visit ${p.name}.` };
+function buildItem(place, time, dayId, destination) {
+  const meta     = PLACE_META[place.category] ?? { type: 'activity', desc: p => `Visit ${p.name}.` };
+  const catLabel = CATEGORY_PHOTO_LABEL[place.category] ?? '';
+  // Contextual query: "Star cafe Ulcinj Montenegro" beats just "Star" which
+  // pulls space imagery from photo APIs due to lexical ambiguity.
+  const photoQuery = destination
+    ? `${place.name} ${catLabel} ${destination}`.replace(/\s+/g, ' ').trim()
+    : null;
   return {
     id:               crypto.randomUUID(),
     itinerary_day_id: dayId,
@@ -69,10 +87,11 @@ function buildItem(place, time, dayId) {
     description:      meta.desc(place),
     start_time:       mapTime(time),
     // prefixed fields — stripped before DB insert, stored in metadata jsonb
-    _source:    place.id.startsWith('otm:') ? 'opentripmap' : 'openstreetmap',
-    _place_id:  place.id,
-    _lat:       place.lat,
-    _lon:       place.lon,
+    _source:      place.id.startsWith('otm:') ? 'opentripmap' : 'openstreetmap',
+    _place_id:    place.id,
+    _lat:         place.lat,
+    _lon:         place.lon,
+    _photo_query: photoQuery,
   };
 }
 
@@ -120,7 +139,7 @@ export function assembleItinerary(tripId, tripData, themes, buckets) {
 
     const itinerary_items = DAILY_SLOTS.map(time => {
       const place = pickPlace(SLOT_CATEGORIES[time] ?? ['attraction']);
-      return place ? buildItem(place, time, dayId) : buildFallback(destination, time, dayId);
+      return place ? buildItem(place, time, dayId, destination) : buildFallback(destination, time, dayId);
     });
 
     days.push({

@@ -9,9 +9,9 @@ import { type Trip } from "../../hooks/itineraryService";
  * - Exponential backoff for rate limiting
  * - Automatic retry on 429 errors
  */
-const inFlightRequests = new Map<string, Promise<{ lat: number; lon: number }>>();
+//const inFlightRequests = new Map<string, Promise<{ lat: number; lon: number }>>();
 
-async function fetchWithRetry(
+ /* async function fetchWithRetry(
   url: string,
   maxRetries: number = 3
 ): Promise<Response> {
@@ -40,6 +40,7 @@ async function fetchWithRetry(
 
   throw lastError || new Error("Max retries exceeded");
 }
+  */
 
 /**
  * ✅ SIMPLIFIED BUDGET CALCULATION

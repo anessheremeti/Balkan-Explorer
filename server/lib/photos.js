@@ -13,7 +13,7 @@ export function normaliseQuery(raw) {
     .replace(/[^a-z0-9 ]/g, ' ')
     .split(/\s+/)
     .filter(w => w.length > 2 && !STOP_WORDS.has(w))
-    .slice(0, 3)
+    .slice(0, 4)
     .join(' ');
 }
 

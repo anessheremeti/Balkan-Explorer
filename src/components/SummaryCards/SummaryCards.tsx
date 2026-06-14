@@ -32,7 +32,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, icon, iconB
   </div>
 );
 
-const SummaryCards: React.FC<{ userId: string }> = ({ userId }) => {
+const SummaryCards: React.FC<{ userId: string  | null}> = ({ userId }) => {
   const { t } = useTranslation('itinerary');
 
 

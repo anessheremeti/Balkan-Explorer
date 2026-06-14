@@ -69,8 +69,8 @@ const Dropdown: React.FC<DropdownProps> = ({ onClose }) => {
         <nav className="grid gap-0">
           {[
             {
-              name: t('account_settings'),
-              href: "/account-settings",
+              name: t('my_travels'),
+              href: "/my-travels",
               icon: (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -82,8 +82,10 @@ const Dropdown: React.FC<DropdownProps> = ({ onClose }) => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M8 7a4 4 0 118 0 4 4 0 01-8 0z" />
-                  <path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+                  <path d="M6 4a2 2 0 012-2h8a2 2 0 012 2v2H6V4z" />
+                  <rect x="2" y="6" width="20" height="14" rx="2" />
+                  <path d="M12 12v4" />
+                  <path d="M10 14h4" />
                 </svg>
               ),
             },

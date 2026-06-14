@@ -1,15 +1,13 @@
-import { Calendar, Loader, Users } from "lucide-react"; 
+import { Calendar, Loader, Users } from "lucide-react";
 import HeaderActions from "../../components/HeaderActions/HeaderActions";
 import SummaryCards from "../../components/SummaryCards/SummaryCards";
 import Timeline from "../../components/Timeline/Timeline";
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
-import React, { useEffect, useState } from "react";
+import InlineDayMap from "../../components/InlineDayMap/InlineDayMap";
+import { useEffect, useState } from "react";
 import tripService from "../../hooks/tripService";
-import { type ItineraryDay, type Trip } from "../../hooks/itineraryService";
+import { type Trip } from "../../hooks/itineraryService";
 import { supabase } from "../../../createClient";
 import {useTranslation} from "react-i18next";
-const containerStyle = { width: '100%', height: '253px', top:'0rem' };
-const center = { lat: -3.745, lng: -38.523 };
 
 type Theme = "light" | "dark";
 
@@ -28,9 +26,8 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
   const [generating, setGenerating] = useState(false);
     const [pollAttempt, setPollAttempt] = useState(0);
       const [trip, setTrip] = useState<Trip | null>(null);
-      const [itineraryDays, setItineraryDays] = useState<ItineraryDay[]>([]);
-    const [getItineraryByTripId, setGetItineraryByTripId] = useState<((id: string) => Promise<any>) | null>(null);
-      const [expandedDay, setExpandedDay] = useState<number | null>(1);
+    const [getItineraryByTripId, setGetItineraryByTripId] = useState<((id: string) => Promise<unknown>) | null>(null);
+  const [selectedMapDayNumber, setSelectedMapDayNumber] = useState<number | null>(null);
 
       // Initialize the service hook
       useEffect(() => {
@@ -83,30 +80,19 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
   
             if (ready) {
               // Try in-memory fast endpoint first (no Supabase latency)
-              let itinerary: { trip: import("../../hooks/itineraryService").Trip; days: import("../../hooks/itineraryService").ItineraryDay[] } | null = null;
+              let itinerary: { trip: Trip } | null = null;
               try {
                 const fastRes = await fetch(`/api/trips/${pendingTripId}/itinerary-fast`);
-                if (fastRes.ok) itinerary = await fastRes.json();
+                if (fastRes.ok) itinerary = await fastRes.json() as { trip: Trip };
               } catch { /* fall through */ }
 
               // Fallback: query Supabase directly
-              if (!itinerary) itinerary = await getItineraryByTripId(pendingTripId!);
+              if (!itinerary) itinerary = (await getItineraryByTripId(pendingTripId!)) as { trip: Trip };
 
               if (!cancelled && itinerary) {
                 setTrip(itinerary.trip);
-                setItineraryDays(itinerary.days);
-                setExpandedDay(1);
                 setGenerating(false);
               }
-       /*        setTimeout(() => {
-                
-    window.location.reload();
-    const currentScroll = window.scrollY;
-// Update your DOM here
-window.scrollTo(0, currentScroll);
-  }, 300);
-  
-              return; */
             }
           } catch {
             // network hiccup — keep polling
@@ -120,10 +106,8 @@ window.scrollTo(0, currentScroll);
         // always saves a fallback itinerary, so it should be ready by now.
         if (!cancelled) {
           try {
-            const itinerary = await getItineraryByTripId(pendingTripId!);
+            const itinerary = await getItineraryByTripId(pendingTripId!) as { trip: Trip; days: unknown[] };
             setTrip(itinerary.trip);
-            setItineraryDays(itinerary.days);
-            setExpandedDay(1);
           } catch {
             // nothing to show — user can retry by refreshing
           } finally {
@@ -135,26 +119,13 @@ window.scrollTo(0, currentScroll);
       poll();
       return () => { cancelled = true; };
     }, [getItineraryByTripId, pendingTripId]);
-  // Google Maps Loader
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries: ['maps', 'places'] as ('maps' | 'places')[],
-  });
-  const [_map, setMap] = useState<google.maps.Map | null>(null);
-  const onLoad = React.useCallback((map: google.maps.Map) => {
-    const bounds = new window.google.maps.LatLngBounds(center);
-    map.fitBounds(bounds);
-    setMap(map);
-  }, []);
-  const onUnmount = React.useCallback(() => setMap(null), []);
 
   // Fetch latest trip
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const { data: authData, error: authError } = await supabase.auth.getUser();
+        const { data: authData } = await supabase.auth.getUser();
        
          const userId = authData?.user?.id;
          const guestId = localStorage.getItem('guest_id')
@@ -302,21 +273,22 @@ if (generating) {
 
       <div className="grid gap-6 mt-10 sm:grid-cols-6 lg:grid-cols-12">
         <div className="col-span-8 space-y-6">
-          <SummaryCards userId={userId}  />
-          <Timeline pendingTripId={pendingTripId} />
+          <SummaryCards userId={userId} />
+          <Timeline
+            pendingTripId={pendingTripId}
+            onViewOnMap={(dayNumber) => setSelectedMapDayNumber(dayNumber)}
+            activeMapDayNumber={selectedMapDayNumber}
+          />
         </div>
 
-        <div className="col-span-4 space-y-6">
-          <div className="rounded-2xl h-64 shadow-sm flex items-center justify-center bg-white dark:bg-slate-800">
-            {isLoaded && (
-              <GoogleMap
-                mapContainerStyle={containerStyle}
-                center={center}
-                zoom={10}
-                onLoad={onLoad}
-                onUnmount={onUnmount}
-              />
-            )}
+        <div className="col-span-4">
+          <div className="sticky top-6 space-y-4">
+            <InlineDayMap
+              tripId={currentTrip?.id ?? null}
+              activeDayNumber={selectedMapDayNumber}
+              onDayChange={(dayNumber) => setSelectedMapDayNumber(dayNumber)}
+              isDark={isDark}
+            />
           </div>
         </div>
       </div>
