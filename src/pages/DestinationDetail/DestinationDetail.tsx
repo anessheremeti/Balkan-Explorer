@@ -10,6 +10,7 @@ import { DestinationDetailSkeleton } from "../../components/Skeleton/Skeleton";
 import destinationService from "../../hooks/destinationService";
 import type { Destination } from "../../hooks/destinationService";
 import { useTheme } from "../../context/ThemeContext";
+import { Analytics } from "../../lib/analytics";
 
 const DestinationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,6 +43,7 @@ const DestinationDetail: React.FC = () => {
           setDestination(null);
         } else {
           setDestination(data);
+          Analytics.destinationViewed(data.name);
         }
       } catch (err) {
         console.error("Error fetching destination:", err);

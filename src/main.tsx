@@ -6,6 +6,9 @@ import App from "./App.tsx";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
 import "./i18n";
+import { initAnalytics } from "./lib/analytics";
+
+initAnalytics();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -1,5 +1,6 @@
 import { supabase } from "../../createClient";
 import { API_BASE } from "../constants/api";
+import { Analytics } from "../lib/analytics";
 
 export interface TripData {
   title: string;
@@ -67,6 +68,7 @@ const submitServiceWithItineraryFast = async (tripData: TripData) => {
 
     const result = await response.json();
     console.log("✅ Trip created instantly:", result.trip);
+    Analytics.tripCreated(tripData.destination);
     return result;
 
   } catch (error) {

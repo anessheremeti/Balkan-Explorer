@@ -17,11 +17,13 @@ import AccountSettings from './pages/AccountSettings/AccountSettings';
 import ForgotPassword from './pages/ForgotPassword/ForgotPassword';
 import ResetPassword from './pages/ResetPassword/ResetPassword';
 import MyTravels from './pages/MyTravels/MyTravels';
+import PageTracker from './components/Analytics/PageTracker';
 function App() {
   return (
     <>
 
     <ScrollToTop />
+    <PageTracker />
     <Routes>
       <Route path="/" element={<Mainpage />} />
       <Route path="/signup" element={<SignUp />} />
