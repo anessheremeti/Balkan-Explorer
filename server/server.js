@@ -36,7 +36,8 @@ if (missing.length) {
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:5173' }));
+const FRONTEND_URL = (process.env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/$/, '');
+app.use(cors({ origin: FRONTEND_URL }));
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
