@@ -8,6 +8,7 @@ import tripService from "../../hooks/tripService";
 import { type Trip } from "../../hooks/itineraryService";
 import { supabase } from "../../../createClient";
 import {useTranslation} from "react-i18next";
+import { API_BASE } from "../../constants/api";
 
 type Theme = "light" | "dark";
 
@@ -73,7 +74,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
           if (cancelled) return;
   
           try {
-            const res = await fetch(`/api/trips/${pendingTripId}/itinerary-status`);
+            const res = await fetch(`${API_BASE}/api/trips/${pendingTripId}/itinerary-status`);
             const { ready } = await res.json();
   
             setPollAttempt(attempt + 1);
@@ -82,7 +83,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
               // Try in-memory fast endpoint first (no Supabase latency)
               let itinerary: { trip: Trip } | null = null;
               try {
-                const fastRes = await fetch(`/api/trips/${pendingTripId}/itinerary-fast`);
+                const fastRes = await fetch(`${API_BASE}/api/trips/${pendingTripId}/itinerary-fast`);
                 if (fastRes.ok) itinerary = await fastRes.json() as { trip: Trip };
               } catch { /* fall through */ }
 
