@@ -172,6 +172,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
       const { submitServiceWithItineraryFast } =
         await import("../../hooks/submitService");
       const result = await submitServiceWithItineraryFast(formData);
+      sessionStorage.setItem('iterinary', JSON.stringify(formData));
       console.log(formData);
       if (result?.trip?.id) {
         setStartingDate(today);
