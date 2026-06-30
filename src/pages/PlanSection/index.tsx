@@ -139,7 +139,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
         }
 
         const { getLatestTrip } = await tripService();
-        const latestTrip = await getLatestTrip(userId ?? "");
+        const latestTrip = await getLatestTrip(userId ?? null, guestId);
 
        if (!latestTrip) {
           setError("No trips found");
@@ -196,6 +196,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
   const currentTrip = trip ?? trips;
   const tripRange = formatTripRange(currentTrip);
   console.log("Current trip:", currentTrip);
+  const guestId = localStorage.getItem('guest_id')
 if (generating) {
     const progress = Math.min(Math.round((pollAttempt / POLL_MAX_ATTEMPTS) * 100), 99);
     return (
@@ -274,7 +275,7 @@ if (generating) {
 
       <div className="grid gap-6 mt-10 sm:grid-cols-6 lg:grid-cols-12">
         <div className="col-span-8 space-y-6">
-          <SummaryCards userId={userId} />
+          <SummaryCards userId={userId || guestId} />
           <Timeline
             pendingTripId={pendingTripId}
             onViewOnMap={(dayNumber) => setSelectedMapDayNumber(dayNumber)}

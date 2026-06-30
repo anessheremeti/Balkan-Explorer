@@ -44,15 +44,16 @@ const SummaryCards: React.FC<{ userId: string  | null}> = ({ userId }) => {
     async function fetchTripBudget() {
       try {
         const { getLatestTrip } = await tripService();
-        const { data: authData, error: authError } = await supabase.auth.getUser();
+        const { data: authData } = await supabase.auth.getUser();
+        const userId = authData?.user?.id ?? null;
+        const guestId = localStorage.getItem("guest_id");
 
-        if (authError || !authData?.user?.id) {
+        if (!userId && !guestId) {
           setError("Please log in to see your itinerary");
           return;
         }
 
-        const userId = authData.user.id;
-        const trip = await getLatestTrip(userId);
+        const trip = await getLatestTrip(userId, guestId);
 
         if (trip) {
           setLatestTrip(trip);

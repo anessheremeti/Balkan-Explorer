@@ -16,8 +16,8 @@ const tripService = async () => {
   
 
 
-  const getLatestTrip = async (userId: string | null) => {
-    const guestId = localStorage.getItem("guest_id");
+  const getLatestTrip = async (userId: string | null, guestIdParam?: string | null) => {
+    const guestId = guestIdParam ?? localStorage.getItem("guest_id");
     try {
       let query = supabase
         .from("trips")

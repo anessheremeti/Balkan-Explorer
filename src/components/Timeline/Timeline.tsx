@@ -32,7 +32,7 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
   const [, setPollAttempt] = useState(0);
   const { theme } = useTheme();
   const { t } = useTranslation('itinerary');
-
+  
   // ── Fetch latest itinerary on mount ──────────────────────────────────────
   useEffect(() => {
     // Skip normal fetch when a new trip is being generated
@@ -43,14 +43,16 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
         setLoading(true);
         setError(null);
 
-        const { data: authData, error: authError } = await supabase.auth.getUser();
+        const { data: authData } = await supabase.auth.getUser();
+        const userId = authData?.user?.id ?? null;
+        const guestId = localStorage.getItem("guest_id");
 
-        if (authError || !authData?.user?.id) {
+        if (!userId && !guestId) {
           setError("Please log in to see your itinerary");
           return;
         }
 
-        const response = await getLatestTripItinerary(authData.user.id);
+        const response = await getLatestTripItinerary(userId, guestId);
 
         if (response.error) {
           setError(response.error);

@@ -55,19 +55,22 @@ export interface ItineraryResponse {
  * - If no trips, return null
  */
 export async function getUserTripsWithLatestItinerary(
-  userId: string
+  userId: string | null, guestId?: string | null
 ): Promise<Trip | null> {
   try {
-    if (!userId) {
-      throw new Error("User ID is required");
+    if (!userId && !guestId) {
+      throw new Error("User ID or guest ID is required");
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("trips")
       .select("*")
-      .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(1);
+
+    query = userId ? query.eq("user_id", userId) : query.eq("guest_id", guestId!);
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("❌ Error fetching user trips:", error);
@@ -174,7 +177,7 @@ export async function getItineraryByTripId(
  * Combines both functions in one call for efficiency
  */
 export async function getLatestTripItinerary(
-  userId: string
+  userId: string | null, guestId?: string | null
 ): Promise<ItineraryResponse> {
   const response: ItineraryResponse = {
     trip: null,
@@ -182,13 +185,12 @@ export async function getLatestTripItinerary(
     isLoading: false,
     error: null,
   };
-
   try {
     // Step 1: Get latest trip
-    const latestTrip = await getUserTripsWithLatestItinerary(userId);
+    const latestTrip = await getUserTripsWithLatestItinerary(userId, guestId);
 
     if (!latestTrip) {
-      console.warn("⚠️  No trips found for user:", userId);
+      console.warn("⚠️  No trips found for user/guest:", userId ?? guestId);
       response.error = "No trips found. Start by creating a new trip!";
       return response;
     }
