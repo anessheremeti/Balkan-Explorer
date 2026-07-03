@@ -338,8 +338,8 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-3 max-sm:flex flex-wrap">
+                    <div className="space-y-1 max-sm:min-w-full">
                       <span className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                         {t("departure")}
                       </span>
@@ -368,7 +368,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     </div>
 
                     <div className="space-y-1">
-                      <span className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                      <span className={`text-xs max-sm:min-w-full font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                         {t("return")}
                       </span>
                       <input

@@ -158,10 +158,7 @@ const isDark = theme.theme === 'dark';
               </Link>
             
             <div className="pt-4 mt-4 border-t border-slate-100 flex flex-col space-y-3 px-2">
-              <button className="flex items-center w-full px-3 py-3 text-slate-600 font-medium hover:bg-slate-50 rounded-lg transition-colors">
-                <Search size={18} className="mr-3" />
-                {t('search')}
-              </button>
+              
            
               {!access_token ? (
    <Link to="/login"> <Button variant="ghost" href="#login">

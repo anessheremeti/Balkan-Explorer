@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
 /* ── Google Places Autocomplete dropdown ───────────────────────────────── */
-
+*{
+  outline: solid 1px red ;
+}
 .pac-container {
   margin-top: 8px;
   border-radius: 16px;
