@@ -1,4 +1,4 @@
-import { ChevronDown, Clock, Star, MapPin, Navigation, Map as MapIcon, Loader2 } from "lucide-react";
+import { ChevronDown, Star, MapPin, Navigation, Map as MapIcon, Loader2, Compass } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../../createClient";
 import { useItemPhoto } from "../../hooks/useItemPhoto";
@@ -165,13 +165,31 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
    */
   if (!trip || itineraryDays.length === 0) {
     return (
-      <div className="space-y-6">
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center">
-          <Clock className="w-8 h-8 text-slate-400 mx-auto mb-3" />
-          <h3 className="font-semibold text-slate-900">{t('no_itinerary')}</h3>
-          <p className="text-sm text-slate-600 mt-1">
-            {t('no_itinerary_desc')}
-          </p>
+      <div className={`rounded-2xl border-2 border-dashed p-10 text-center ${
+        theme === 'dark' ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-slate-50/60'
+      }`}>
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center">
+            <Compass className="w-8 h-8 text-sky-500" />
+          </div>
+        </div>
+        <h3 className={`text-lg font-bold mb-1 ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+          Your next adventure is waiting
+        </h3>
+        <p className={`text-sm max-w-xs mx-auto mb-6 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+          Fill in the form above — destination, dates, travel style — and we'll build your personalized Balkan itinerary in seconds.
+        </p>
+        <div className="flex items-center justify-center gap-6 text-xs font-medium">
+          {[
+            { icon: '📍', label: 'Pick a destination' },
+            { icon: '📅', label: 'Choose your dates' },
+            { icon: '✨', label: 'Get your itinerary' },
+          ].map((step, i) => (
+            <div key={i} className="flex flex-col items-center gap-1.5">
+              <span className="text-xl">{step.icon}</span>
+              <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{step.label}</span>
+            </div>
+          ))}
         </div>
       </div>
     );

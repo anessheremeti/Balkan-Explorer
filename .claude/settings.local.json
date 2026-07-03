@@ -6,7 +6,8 @@
       "Bash(node --check server/lib/itinerary-assembler.js)",
       "Bash(node -e \"require\\('jspdf'\\)\")",
       "Bash(node -e \"import\\('express-rate-limit'\\).then\\(m => console.log\\('OK', Object.keys\\(m\\)\\)\\)\")",
-      "Bash(node --input-type=module --eval \"import\\('./server/server.js'\\).catch\\(e => { console.error\\(e.message\\); process.exit\\(1\\); }\\)\")"
+      "Bash(node --input-type=module --eval \"import\\('./server/server.js'\\).catch\\(e => { console.error\\(e.message\\); process.exit\\(1\\); }\\)\")",
+      "WebFetch(domain:dogstudio.co)"
     ]
   }
 }

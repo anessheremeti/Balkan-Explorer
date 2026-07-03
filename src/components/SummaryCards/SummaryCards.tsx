@@ -38,7 +38,7 @@ const SummaryCards: React.FC<{ userId: string  | null}> = ({ userId }) => {
 
   const [budgetData, setBudgetData] = useState<any>(null);
   const [latestTrip, setLatestTrip] = useState<Trip | null>(null);
-  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchTripBudget() {
@@ -48,10 +48,7 @@ const SummaryCards: React.FC<{ userId: string  | null}> = ({ userId }) => {
         const userId = authData?.user?.id ?? null;
         const guestId = localStorage.getItem("guest_id");
 
-        if (!userId && !guestId) {
-          setError("Please log in to see your itinerary");
-          return;
-        }
+        if (!userId && !guestId) return;
 
         const trip = await getLatestTrip(userId, guestId);
 
@@ -60,16 +57,17 @@ const SummaryCards: React.FC<{ userId: string  | null}> = ({ userId }) => {
           const budget = await calculateBudgetWithDistance(trip);
           setBudgetData(budget);
         }
-      } catch (err: any) {
-        setError(err.message || "Error calculating budget");
+      } catch {
+        // silent — no trip yet is a normal state
+      } finally {
+        setLoading(false);
       }
     }
 
     fetchTripBudget();
   }, [userId]);
 
-  if (error) return <p>{error}</p>;
-  if (!budgetData || !latestTrip) return <p>Loading...</p>;
+  if (loading || !budgetData || !latestTrip) return null;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">

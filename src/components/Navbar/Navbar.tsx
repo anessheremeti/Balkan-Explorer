@@ -1,9 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
-import { Search, Send, Menu, X, ChevronDown } from 'lucide-react';
+import { Search, Send, Menu, X, ChevronDown, UserCircle2 } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
-import Avatar from '../../assets/people.png'
 import { usersService } from '../../hooks/usersService';
 import Dropdown from '../Dropdown/Dropdown';
 import { useTheme } from '../../context/ThemeContext';
@@ -94,13 +93,25 @@ const isDark = theme.theme === 'dark';
                   aria-expanded={showDropdown}
                   aria-haspopup="true"
                 >
-                  <img src={Avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
+                  <UserCircle2
+                    size={32}
+                    className={isDark ? 'text-slate-300' : 'text-slate-500'}
+                  />
                   <ChevronDown
                     size={16}
                     className={`transition-transform ${showDropdown ? 'rotate-180' : ''} ${isDark ? 'text-slate-300' : 'text-slate-500'}`}
                   />
                 </button>
-                {showDropdown && <Dropdown onClose={() => setShowDropdown(false)} />}
+                {showDropdown && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      aria-hidden="true"
+                      onClick={() => setShowDropdown(false)}
+                    />
+                    <Dropdown onClose={() => setShowDropdown(false)} />
+                  </>
+                )}
               </div>
             </div>
           ) : (

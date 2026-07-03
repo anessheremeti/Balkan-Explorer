@@ -26,7 +26,6 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
   const [theme, setTheme] = useState<Theme>("light");
   const [trips, setTrips] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [pollAttempt, setPollAttempt] = useState(0);
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -71,7 +70,6 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
       const poll = async () => {
         setGenerating(true);
         setLoading(false);
-        setError(null);
   
         while (attempt < POLL_MAX_ATTEMPTS) {
           if (cancelled) return;
@@ -135,9 +133,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
          const guestId = localStorage.getItem('guest_id')
        // console.log("Authenticated user ID:", userId);
         if(!userId  && !guestId) {
-          setError("User not authenticated");
           setLoading(false);
-          
           return;
         }
 
@@ -145,7 +141,6 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
         const latestTrip = await getLatestTrip(userId ?? null, guestId);
 
        if (!latestTrip) {
-          setError("No trips found");
           setTrips(null);
           return;
         }
@@ -155,7 +150,6 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
 
       } catch (err) {
         console.error("Fetch error:", err);
-        setError("Failed to fetch trips");
       } finally {
         setLoading(false);
       }
@@ -231,7 +225,7 @@ if (generating) {
   }
 
   // ── Loading state (initial fetch) ────────────────────────────────────────
-  if (loading) {
+  if (loading ) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-center py-12">
@@ -251,15 +245,20 @@ if (generating) {
         : "bg-white border-t border-slate-100"
     } text-slate-900 dark:bg-slate-900 dark:text-slate-50`}>
 
+    
       <div className="flex items-center gap-10 text-gray-500 text-sm">
-        <div className="flex items-center gap-2">
+        {currentTrip && (
+          <div className="flex items-center gap-2">
           <Calendar size={18} />
           <span>{tripRange}</span>
         </div>
+        )}
+        {currentTrip &&
         <div className="flex items-center gap-2">
           <Users size={18} />
-          {currentTrip && <span>{t('travelers_count', { count: currentTrip?.travelers ?? 0 })}</span>}
-        </div>
+           && <span>{t('travelers_count', { count: currentTrip?.travelers ?? 0 })}
+            </span>
+        </div> }
       </div>
 
       <div className="flex flex-wrap justify-between items-center mt-4">
@@ -268,15 +267,14 @@ if (generating) {
         ? "text-gray-300"
         : "text-slate-900"
     }`}>
-          {t('trip_header')} {currentTrip?.destination || "Your Destination"}
+          {currentTrip ? `${t('trip_header')} ${currentTrip.destination}` : ''}
         </h1>
+       {currentTrip && (
         <HeaderActions onDownloadPDF={downloadPDF} pdfLoading={pdfLoading} />
+       )} 
       </div>
 
       <PDFAuthModal open={showAuthModal} onClose={closeAuthModal} />
-
-      {loading && <p className="mt-4">Loading trips...</p>}
-      {error && <p className="mt-4 text-red-500">{error}</p>}
 
       <div className="grid gap-6 mt-10 sm:grid-cols-6 lg:grid-cols-12">
         <div className="col-span-8 space-y-6">

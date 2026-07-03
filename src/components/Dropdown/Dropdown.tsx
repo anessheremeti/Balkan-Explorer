@@ -23,7 +23,7 @@ const Dropdown: React.FC<DropdownProps> = ({ onClose }) => {
   }, []);
   return (
     <>
-    <div className="w-72 bg-white rounded-2xl shadow-xl border border-slate-100 absolute top-14 right-[-4rem] z-50 overflow-hidden">
+    <div className="w-72 bg-white rounded-2xl shadow-xl border border-slate-100 absolute top-12 right-0 z-50 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-100">
         {/* Avatar & User Info */}

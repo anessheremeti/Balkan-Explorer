@@ -14,6 +14,7 @@ import {
 import React, { useState, useMemo } from "react";
 
 import Navbar from "../../components/Navbar/Navbar";
+import PageIntro from "../../components/PageIntro/PageIntro";
 import PlanSection from "../PlanSection";
 import Footer from "../../components/Footer/Footer";
 import { useTheme } from "../../context/ThemeContext";
@@ -98,6 +99,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
   const [pendingTripId, setPendingTripId] = useState<string | null>(null);
+  const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('intro_shown'));
 
   const increaseTravelers = () => setTravelers((prev) => Math.min(prev + 1, 20));
   const decreaseTravelers = () => setTravelers((prev) => Math.max(1, prev - 1));
@@ -212,6 +214,14 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
   return (
     <div className={`w-full min-h-screen ${isDark ? "bg-slate-950" : "bg-white"}`}>
+      {showIntro && (
+        <PageIntro
+          onComplete={() => {
+            sessionStorage.setItem('intro_shown', '1');
+            setShowIntro(false);
+          }}
+        />
+      )}
       <Navbar />
 
       <main className={`${isDark ? "bg-slate-950" : "bg-white"}`}>
