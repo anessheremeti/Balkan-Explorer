@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Link,useNavigate } from 'react-router-dom';
 import { usersService } from '../../hooks/usersService';
+import { usePostHog } from '@posthog/react';
 
 const SignUp: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +18,7 @@ const SignUp: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { signUpUser } = usersService();
   const navigate = useNavigate();
+  const posthog = usePostHog();
   
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -68,8 +70,10 @@ const SignUp: React.FC = () => {
         email: formData.email,
         password: formData.password
       });
+
+      posthog?.identify(user.id, { email: user.email, name: formData.name });
+
       alert('Account created successfully!');
-      console.log('User registered:', user);
       navigate('/');
       // Reset form
       setFormData({

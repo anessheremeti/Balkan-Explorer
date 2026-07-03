@@ -216,10 +216,13 @@ app.get('/api/trips/:id/itinerary-fast', (req, res) => {
 // ─── Routes: Photo search ─────────────────────────────────────────────────────
 
 app.get('/api/photos/search', async (req, res) => {
-  const { q, raw } = req.query;
+  const { q, raw, name, lat, lon } = req.query;
   if (!q) return res.status(400).json({ error: 'Query required' });
   try {
-    const url = await searchPhotos(normaliseQuery(q), raw);
+    const context = (name && lat && lon)
+      ? { name, lat: parseFloat(lat), lon: parseFloat(lon) }
+      : null;
+    const url = await searchPhotos(normaliseQuery(q), raw, context);
     res.json({ url });
   } catch {
     res.status(500).json({ error: 'Photo search failed' });

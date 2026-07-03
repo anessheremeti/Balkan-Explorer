@@ -378,10 +378,19 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
   // hook merges title + destination itself at Level 1.
   const photoTitle = (item.metadata?.photo_query as string | undefined) ?? item.title;
   const hasQueryContext = !!item.metadata?.photo_query;
+  // Real-world coordinates (when the place came from OpenStreetMap/OpenTripMap)
+  // let the backend fetch the actual Google Places photo of this exact business
+  // instead of guessing from keywords — critical for proper-noun names like
+  // "Chicken Corner" that generic stock-photo search can't recognise.
+  const lat = item.metadata?.lat as number | null | undefined;
+  const lon = item.metadata?.lon as number | null | undefined;
   const { url: fetchedUrl, loading: photoLoading } = useItemPhoto(photoTitle, {
     fallback: hasQueryContext ? undefined : destination,
     itemType: item.item_type,
     enabled: !staticUrl,
+    lat,
+    lon,
+    placeName: item.title,
   });
   const imageUrl = staticUrl ?? fetchedUrl;
   return (

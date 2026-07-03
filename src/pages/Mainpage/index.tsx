@@ -40,6 +40,7 @@ type Errors = {
   starting_date?: string;
   returning_date?: string;
   budget_total?: string;
+  travelers?: string | number;
 };
 
 function toDateString(d: Date): string {
@@ -69,6 +70,8 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
   const today = toDateString(new Date());
   const defaultReturn = toDateString(new Date(Date.now() + 7 * 86_400_000));
+  const busReturn = toDateString(new Date(Date.now() + 14 * 86_400_000)); 
+  const roadTripReturn =  toDateString(new Date(Date.now() + 31 * 86_400_000)); 
   const [starting_date, setStartingDate] = useState<string>(today);
   const [returning_date, setReturningDate] = useState<string>(defaultReturn);
   const [starting_location, setStarting_location] = useState<string>("Pejë, Kosovo");
@@ -110,14 +113,25 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
     if (currency === "EUR") return <Euro size={18} className="text-emerald-500" />;
     return <Pound size={18} className="text-emerald-500" />;
   };
-
+    
   const validate = () => {
     const newErrors: Errors = {};
 
     if (!starting_location.trim()) {
       newErrors.starting_location = "Starting location is required";
     }
+    const sameCountry = ['Kosovo', 'Albania', 'North Macedonia', 'Montenegro'].some(
+      country => starting_location.endsWith(country) && destination.endsWith(country)
+    );
+    if (sameCountry) {
+      newErrors.destination = 'Your destination must be in a different country than your starting location.';
+    }
 
+    if (travel_style === 'bus' && (returning_date < defaultReturn || returning_date > busReturn)) {
+      newErrors.returning_date = 'Bus travel requires a trip length between 7 and 14 days.';
+    } else if ((travel_style === 'road' || travel_style === 'resort') && returning_date > roadTripReturn) {
+      newErrors.returning_date = 'This travel style supports a maximum of 31 days.';
+    }
     if (!destination.trim()) {
       newErrors.destination = "Destination is required";
     } else if (!destinationConfirmed) {
@@ -129,7 +143,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
     if (budget_total < 500) {
       newErrors.budget_total = "Budget should be at least 500";
     }
-
+   
     if (!starting_date) {
       newErrors.starting_date = "Departure date is required";
     } else if (starting_date < today) {
@@ -168,7 +182,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
         budget_total,
         currency,
       };
-
+      
       const { submitServiceWithItineraryFast } =
         await import("../../hooks/submitService");
       const result = await submitServiceWithItineraryFast(formData);

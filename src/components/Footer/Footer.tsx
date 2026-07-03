@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, FileText, Send } from "lucide-react";
+import { ArrowRight, FileText, Send, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { useDownloadPDF } from "../../hooks/useDownloadPDF";
+import PDFAuthModal from "../DownloadPDF/PDFAuthModal";
 
 type Theme = "light" | "dark";
 
 const Footer: React.FC = () => {
   const [theme, setTheme] = useState<Theme>("light");
   const { t } = useTranslation("footer");
+  const { download, loading, showAuthModal, closeAuthModal } = useDownloadPDF();
 
   useEffect(() => {
     const loadTheme = () => {
@@ -183,17 +186,24 @@ const Footer: React.FC = () => {
 
       {/* Floating Export Button */}
       <motion.button
+        onClick={download}
+        disabled={loading}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed bottom-8 right-8 bg-[#0f172a] text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center space-x-3 z-50 hover:bg-slate-800 transition-colors duration-200"
+        className="fixed bottom-8 right-8 bg-[#0f172a] text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center space-x-3 z-50 hover:bg-slate-800 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        <FileText className="w-5 h-5 text-slate-300" />
+        {loading
+          ? <Loader2 className="w-5 h-5 animate-spin" />
+          : <FileText className="w-5 h-5 text-slate-300" />
+        }
         <span className="font-bold text-sm tracking-tight">
-          {t('export_pdf')}
+          {loading ? 'Generating...' : t('export_pdf')}
         </span>
       </motion.button>
+
+      <PDFAuthModal open={showAuthModal} onClose={closeAuthModal} />
     </footer>
   );
 };

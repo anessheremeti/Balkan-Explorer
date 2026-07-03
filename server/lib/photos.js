@@ -1,4 +1,5 @@
 import { photoCache } from './cache.js';
+import { findPlacePhoto } from './providers/google-places.js';
 
 const STOP_WORDS = new Set([
   'visit', 'tour', 'walk', 'stroll', 'explore', 'discover', 'enjoy',
@@ -118,12 +119,26 @@ function race(p) {
   return p.then(url => { if (!url) throw new Error('no result'); return url; });
 }
 
-export async function searchPhotos(query, raw) {
+// @param context — { name, lat, lon } of the real-world place, when known.
+// When present, the actual Google Places photo of that exact business is
+// tried first — far more accurate than keyword stock search for proper nouns.
+export async function searchPhotos(query, raw, context) {
   const normalised = normaliseQuery(query);
-  const cacheKey   = normalised || query;
+  const hasContext = context?.name && context.lat != null && context.lon != null;
+  const cacheKey    = hasContext
+    ? `gp:${context.name}:${context.lat.toFixed(4)},${context.lon.toFixed(4)}`
+    : (normalised || query);
 
   const cached = photoCache.get(cacheKey);
   if (cached) return cached;
+
+  if (hasContext) {
+    const realPhoto = await findPlacePhoto(context.name, context.lat, context.lon);
+    if (realPhoto) {
+      photoCache.set(cacheKey, realPhoto, 7 * 24 * 60 * 60 * 1000); // 7 d — real photos don't change often
+      return realPhoto;
+    }
+  }
 
   const sources = [
     race(searchPexels(normalised)),

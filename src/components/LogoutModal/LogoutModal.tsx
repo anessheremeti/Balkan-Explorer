@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../../createClient.ts";
 import { useNavigate } from "react-router-dom";
+import { usePostHog } from "@posthog/react";
 
 interface LogoutModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
   const navigate = useNavigate();
   const modalRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const posthog = usePostHog();
 
   // ESC close + focus
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
       setLoading(true);
       await supabase.auth.signOut();
       sessionStorage.clear();
+      posthog?.reset();
 
       navigate("/login");
     } catch (err) {

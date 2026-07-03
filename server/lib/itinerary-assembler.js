@@ -74,10 +74,16 @@ function tripSeed(tripId) {
 function buildItem(place, time, dayId, destination) {
   const meta     = PLACE_META[place.category] ?? { type: 'activity', desc: p => `Visit ${p.name}.` };
   const catLabel = CATEGORY_PHOTO_LABEL[place.category] ?? '';
-  // Contextual query: "Star cafe Ulcinj Montenegro" beats just "Star" which
-  // pulls space imagery from photo APIs due to lexical ambiguity.
+  // Category + destination only — deliberately omits the business's proper
+  // name. Stock photo APIs (Pexels/Pixabay/Wikipedia) do literal keyword
+  // matching with no concept of real-world businesses, so a name like "Peja
+  // Grill" can pull back a totally unrelated photo (a coastal cliff, once
+  // seen in testing) just because some word in the phrase loosely matched.
+  // The actual business photo is fetched separately via Google Places using
+  // place.name + coordinates, which DOES understand real-world names. This
+  // query is only the safe, generic fallback for when that lookup fails.
   const photoQuery = destination
-    ? `${place.name} ${catLabel} ${destination}`.replace(/\s+/g, ' ').trim()
+    ? `${catLabel || place.category} ${destination}`.replace(/\s+/g, ' ').trim()
     : null;
   return {
     id:               crypto.randomUUID(),

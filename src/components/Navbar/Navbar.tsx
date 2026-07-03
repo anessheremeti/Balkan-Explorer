@@ -76,12 +76,7 @@ const isDark = theme.theme === 'dark';
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <button 
-              aria-label="Search"
-              className="p-2.5 text-slate-500 hover:text-[#0ea5e9] hover:bg-slate-50 transition-all rounded-full focus:outline-none focus:ring-2 focus:ring-[#0ea5e9]/20"
-            >
-              <Search size={20} />
-            </button>
+           
             
             <div className="h-6 w-px bg-slate-200 mx-2" />
                 

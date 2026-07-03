@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Search, MapPin, Star, Filter, ArrowRight, Info } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Search, MapPin, Star, Filter, ArrowRight, Info, ChevronDown, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
@@ -15,11 +15,27 @@ import { useTranslation } from 'react-i18next';
 
 const DestinationsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [sortByRating, setSortByRating] = useState(false);
+  const [showRegionDropdown, setShowRegionDropdown] = useState(false);
   const { theme } = useTheme();
   const navigate = useNavigate();
   const { t } = useTranslation('pages');
+  const regionDropdownRef = useRef<HTMLDivElement>(null);
 
   const isDark = theme === "dark"
+
+  const REGIONS = ['Albania', 'Kosovo', 'Montenegro', 'North Macedonia'];
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (regionDropdownRef.current && !regionDropdownRef.current.contains(e.target as Node)) {
+        setShowRegionDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   // Mock data based on the provided schema structure
   const destinations = [
     {
@@ -96,10 +112,13 @@ const DestinationsPage: React.FC = () => {
     }
   ];
 
-  const filteredDestinations = destinations.filter(d => 
-    d.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    d.country.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDestinations = destinations
+    .filter(d =>
+      (d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+       d.country.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      (selectedRegion === null || d.country === selectedRegion)
+    )
+    .sort((a, b) => sortByRating ? b.rating - a.rating : 0);
 
   return (
     <div>
@@ -160,11 +179,60 @@ const DestinationsPage: React.FC = () => {
         {/* Filters & Stats */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 space-y-4 md:space-y-0">
           <div className="flex items-center space-x-4">
-            <button className="flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-colors shadow-sm">
-              <Filter size={18} />
-              <span>{t('dest_all_regions')}</span>
-            </button>
-            <button className="flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-colors shadow-sm">
+            {/* Region filter */}
+            <div className="relative" ref={regionDropdownRef}>
+              <button
+                onClick={() => setShowRegionDropdown(v => !v)}
+                className={`flex items-center space-x-2 px-4 py-2 border rounded-xl font-medium transition-colors shadow-sm ${
+                  selectedRegion
+                    ? 'bg-sky-500 border-sky-500 text-white hover:bg-sky-600'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <Filter size={18} />
+                <span>{selectedRegion ?? t('dest_all_regions')}</span>
+                <ChevronDown size={14} className={`transition-transform ${showRegionDropdown ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {showRegionDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full mt-2 left-0 z-50 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden min-w-[180px]"
+                  >
+                    <button
+                      onClick={() => { setSelectedRegion(null); setShowRegionDropdown(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-slate-50 transition-colors ${selectedRegion === null ? 'text-sky-500' : 'text-slate-700'}`}
+                    >
+                      {t('dest_all_regions')}
+                    </button>
+                    {REGIONS.map(r => (
+                      <button
+                        key={r}
+                        onClick={() => { setSelectedRegion(r); setShowRegionDropdown(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-slate-50 transition-colors ${selectedRegion === r ? 'text-sky-500' : 'text-slate-700'}`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Top Rated toggle */}
+            <button
+              onClick={() => setSortByRating(v => !v)}
+              className={`flex items-center space-x-2 px-4 py-2 border rounded-xl font-medium transition-colors shadow-sm ${
+                sortByRating
+                  ? 'bg-sky-500 border-sky-500 text-white hover:bg-sky-600'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <TrendingUp size={18} />
               <span>{t('dest_top_rated')}</span>
             </button>
           </div>

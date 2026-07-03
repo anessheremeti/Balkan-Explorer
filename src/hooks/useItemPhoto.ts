@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_BASE } from "../constants/api";
 
 // ---------------------------------------------------------------------------
 // Module-level cache
@@ -8,6 +9,12 @@ import { useState, useEffect } from "react";
 // ---------------------------------------------------------------------------
 const photoCache = new Map<string, string | null>();
 const promiseCache = new Map<string, Promise<string | null>>();
+
+interface GeoContext {
+  name: string;
+  lat: number;
+  lon: number;
+}
 
 // ---------------------------------------------------------------------------
 // Type-based generic queries — Level 3 fallback.
@@ -34,39 +41,52 @@ function toSearchQuery(title: string): string {
   return title.replace(ACTION_PREFIX_RE, "").trim() || title;
 }
 
+// Geo-anchored lookups (real Google Places photo of the exact business) get
+// their own cache key, distinct from the plain text query, since the same
+// query string can map to many different real-world coordinates.
+function cacheKeyFor(query: string, geo?: GeoContext): string {
+  return geo ? `gp:${geo.name}:${geo.lat.toFixed(4)},${geo.lon.toFixed(4)}` : query;
+}
+
 // ---------------------------------------------------------------------------
 // Core fetch — one HTTP call per query, shared across all renders/components
 // ---------------------------------------------------------------------------
-function fetchPhoto(query: string, rawTitle?: string): Promise<string | null> {
-  if (promiseCache.has(query)) return promiseCache.get(query)!;
+function fetchPhoto(query: string, rawTitle?: string, geo?: GeoContext): Promise<string | null> {
+  const cacheKey = cacheKeyFor(query, geo);
+  if (promiseCache.has(cacheKey)) return promiseCache.get(cacheKey)!;
 
   const params = new URLSearchParams({ q: query });
   if (rawTitle && rawTitle !== query) params.set("raw", rawTitle);
+  if (geo) {
+    params.set("name", geo.name);
+    params.set("lat", String(geo.lat));
+    params.set("lon", String(geo.lon));
+  }
 
-  const p = fetch(`/api/photos/search?${params}`)
+  const p = fetch(`${API_BASE}/api/photos/search?${params}`)
     .then((r) => (r.ok ? (r.json() as Promise<{ url: string | null }>) : { url: null }))
     .then(({ url }) => {
       const result = url ?? null;
-      photoCache.set(query, result);
+      photoCache.set(cacheKey, result);
       return result;
     })
     .catch(() => {
-      photoCache.set(query, null);
+      photoCache.set(cacheKey, null);
       return null;
     });
 
-  promiseCache.set(query, p);
+  promiseCache.set(cacheKey, p);
   return p;
 }
 
 // ---------------------------------------------------------------------------
-// Walk through a list of queries and return the first non-null URL
+// Walk through a list of queries and return the first non-null URL.
+// Only the first (most specific) query carries geo context — the real-place
+// lookup only makes sense for the exact subject, not the generic fallbacks.
 // ---------------------------------------------------------------------------
-// queries[0] is the normalised activity subject; rawTitle is the original
-// card title passed as ?raw= so Wikipedia can search with the full phrase
-async function resolveFirstPhoto(queries: string[], rawTitle: string): Promise<string | null> {
-  for (const q of queries) {
-    const url = await fetchPhoto(q, rawTitle);
+async function resolveFirstPhoto(queries: string[], rawTitle: string, geo?: GeoContext): Promise<string | null> {
+  for (let i = 0; i < queries.length; i++) {
+    const url = await fetchPhoto(queries[i], rawTitle, i === 0 ? geo : undefined);
     if (url !== null) return url;
   }
   return null;
@@ -76,11 +96,12 @@ async function resolveFirstPhoto(queries: string[], rawTitle: string): Promise<s
 // Read best cached result across the full query chain
 // Returns undefined if any required query hasn't been fetched yet
 // ---------------------------------------------------------------------------
-function fromCache(queries: string[]): string | null | undefined {
-  for (const q of queries) {
-    if (!photoCache.has(q)) return undefined; // not fetched yet — unknown
-    const v = photoCache.get(q)!;
-    if (v !== null) return v;                 // found ✓
+function fromCache(queries: string[], geo?: GeoContext): string | null | undefined {
+  for (let i = 0; i < queries.length; i++) {
+    const cacheKey = cacheKeyFor(queries[i], i === 0 ? geo : undefined);
+    if (!photoCache.has(cacheKey)) return undefined; // not fetched yet — unknown
+    const v = photoCache.get(cacheKey)!;
+    if (v !== null) return v;                        // found ✓
     // this level was null → fall through to next
   }
   return null; // all levels exhausted and cached as null
@@ -91,26 +112,40 @@ function fromCache(queries: string[]): string | null | undefined {
 // ---------------------------------------------------------------------------
 
 /**
- * Resolves a landscape photo URL for an itinerary item using a 3-level
- * waterfall so every card gets a photo regardless of destination obscurity:
+ * Resolves a landscape photo URL for an itinerary item.
  *
- *   Level 1 — specific subject  : "Kuršumlija River"
- *   Level 2 — city / destination: "Ferizaj"          (optional)
- *   Level 3 — item type keyword : "river walk"        (almost always returns)
+ *   Level 0 — real Google Places photo of the exact business (when lat/lon known)
+ *   Level 1 — specific subject keyword search : "Kuršumlija River"
+ *   Level 2 — city / destination               : "Ferizaj"          (optional)
+ *   Level 3 — item type keyword                : "river walk"        (almost always returns)
  *
  * All queries are individually cached; the city / type photos are fetched
  * at most once even when shared across many items on the same page.
  *
- * @param title            – itinerary item title
+ * @param title            – itinerary item title / search subject (may be an enriched query)
  * @param options.fallback – city / destination name  (e.g. "Ferizaj")
  * @param options.itemType – item_type value           (e.g. "activity")
  * @param options.enabled  – false when a static image is already available
+ * @param options.lat      – real-world latitude of the place, when known
+ * @param options.lon      – real-world longitude of the place, when known
+ * @param options.placeName – clean real-world place name for the Google Places
+ *                            lookup, when it differs from `title` (e.g. `title`
+ *                            is an enriched query like "Chicken Corner restaurant
+ *                            Ulcinj" but the actual business name is just
+ *                            "Chicken Corner")
  */
 export function useItemPhoto(
   title: string,
-  options: { fallback?: string; itemType?: string; enabled?: boolean } = {}
+  options: {
+    fallback?: string;
+    itemType?: string;
+    enabled?: boolean;
+    lat?: number | null;
+    lon?: number | null;
+    placeName?: string;
+  } = {}
 ): { url: string | null; loading: boolean } {
-  const { fallback, itemType, enabled = true } = options;
+  const { fallback, itemType, enabled = true, lat, lon, placeName } = options;
 
   // Build the ordered query chain once.
   // Level 1 merges the place name with the destination so "Star" in "Ulcinj"
@@ -124,9 +159,12 @@ export function useItemPhoto(
     TYPE_QUERY[itemType?.toLowerCase() ?? ""] ?? DEFAULT_TYPE_QUERY,   // "restaurant local cuisine"
   ];
 
-  const [url, setUrl] = useState<string | null>(() => fromCache(queries) ?? null);
+  const geo: GeoContext | undefined =
+    lat != null && lon != null ? { name: placeName ?? title, lat, lon } : undefined;
+
+  const [url, setUrl] = useState<string | null>(() => fromCache(queries, geo) ?? null);
   const [loading, setLoading] = useState<boolean>(
-    () => enabled && fromCache(queries) === undefined
+    () => enabled && fromCache(queries, geo) === undefined
   );
 
   useEffect(() => {
@@ -136,7 +174,7 @@ export function useItemPhoto(
     }
 
     // Fully resolved from cache — sync state and exit without any fetch
-    const cached = fromCache(queries);
+    const cached = fromCache(queries, geo);
     if (cached !== undefined) {
       setUrl(cached);
       setLoading(false);
@@ -146,7 +184,7 @@ export function useItemPhoto(
     let cancelled = false;
     setLoading(true);
 
-    resolveFirstPhoto(queries, title).then((result) => {
+    resolveFirstPhoto(queries, title, geo).then((result) => {
       if (!cancelled) {
         setUrl(result);
         setLoading(false);
@@ -157,7 +195,7 @@ export function useItemPhoto(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level1, fallback, itemType, enabled]);
+  }, [level1, fallback, itemType, enabled, lat, lon, placeName]);
 
   return { url, loading };
 }

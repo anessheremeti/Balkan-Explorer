@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { usersService } from "../../hooks/usersService";
+import { usePostHog } from "@posthog/react";
 
 const Login: React.FC = () => {
   const { signInUser } = usersService();
   const navigate = useNavigate();
+  const posthog = usePostHog();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,13 +55,13 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await signInUser({
+      const user = await signInUser({
         email: formData.email,
         password: formData.password,
         full_name: ""
       });
 
-      console.log("Login successful");
+      posthog?.identify(user.id, { email: formData.email });
 
       navigate("/");
       setFormData({

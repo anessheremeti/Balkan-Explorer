@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(node --check server/lib/itinerary-assembler.js)",
+      "Bash(node -e \"require\\('jspdf'\\)\")"
     ]
   }
 }

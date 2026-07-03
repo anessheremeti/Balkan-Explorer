@@ -9,6 +9,8 @@ import { type Trip } from "../../hooks/itineraryService";
 import { supabase } from "../../../createClient";
 import {useTranslation} from "react-i18next";
 import { API_BASE } from "../../constants/api";
+import { useDownloadPDF } from "../../hooks/useDownloadPDF";
+import PDFAuthModal from "../../components/DownloadPDF/PDFAuthModal";
 
 type Theme = "light" | "dark";
 
@@ -20,14 +22,15 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
   const POLL_INTERVAL_MS = 2000;
   const POLL_MAX_ATTEMPTS = 75; // 150 s — covers 55 s AI timeout + fallback save
   const {t} = useTranslation('itinerary');
+  const { download: downloadPDF, loading: pdfLoading, showAuthModal, closeAuthModal } = useDownloadPDF();
   const [theme, setTheme] = useState<Theme>("light");
   const [trips, setTrips] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-    const [pollAttempt, setPollAttempt] = useState(0);
-      const [trip, setTrip] = useState<Trip | null>(null);
-    const [getItineraryByTripId, setGetItineraryByTripId] = useState<((id: string) => Promise<unknown>) | null>(null);
+  const [pollAttempt, setPollAttempt] = useState(0);
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [getItineraryByTripId, setGetItineraryByTripId] = useState<((id: string) => Promise<unknown>) | null>(null);
   const [selectedMapDayNumber, setSelectedMapDayNumber] = useState<number | null>(null);
 
       // Initialize the service hook
@@ -267,8 +270,10 @@ if (generating) {
     }`}>
           {t('trip_header')} {currentTrip?.destination || "Your Destination"}
         </h1>
-        <HeaderActions />
+        <HeaderActions onDownloadPDF={downloadPDF} pdfLoading={pdfLoading} />
       </div>
+
+      <PDFAuthModal open={showAuthModal} onClose={closeAuthModal} />
 
       {loading && <p className="mt-4">Loading trips...</p>}
       {error && <p className="mt-4 text-red-500">{error}</p>}

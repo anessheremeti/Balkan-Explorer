@@ -1,24 +1,26 @@
-import { Share2, Pencil, ArrowDownToLine } from "lucide-react";
+import {  ArrowDownToLine, Loader2 } from 'lucide-react';
 
-const ActionButton = ({ icon: Icon, label, primary = false }: any) => (
-  <button
-    className={`flex items-center gap-2 px-5 py-3 rounded-3xl transition ${
-      primary
-        ? "bg-sky-600 text-white hover:bg-sky-700"
-        : "bg-white text-gray-700 hover:bg-gray-200"
-    }`}
-  >
-    <Icon size={18} />
-    <span>{label}</span>
-  </button>
-);
+interface HeaderActionsProps {
+  onDownloadPDF?: () => void;
+  pdfLoading?: boolean;
+}
 
-const HeaderActions = () => {
+const HeaderActions = ({ onDownloadPDF, pdfLoading = false }: HeaderActionsProps) => {
   return (
     <div className="flex flex-wrap max-sm:pt-6 gap-4">
-      <ActionButton icon={Share2} label="Share" />
-      <ActionButton icon={Pencil} label="Edit" />
-      <ActionButton icon={ArrowDownToLine} label="Save" primary />
+      
+
+      <button
+        onClick={onDownloadPDF}
+        disabled={pdfLoading}
+        className="flex items-center gap-2 px-5 py-3 rounded-3xl bg-sky-600 text-white hover:bg-sky-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {pdfLoading
+          ? <Loader2 size={18} className="animate-spin" />
+          : <ArrowDownToLine size={18} />
+        }
+        <span>{pdfLoading ? 'Generating...' : 'Download PDF'}</span>
+      </button>
     </div>
   );
 };
