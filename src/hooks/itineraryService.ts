@@ -162,7 +162,7 @@ export async function getItineraryByTripId(
     response.days = daysWithSortedItems;
     response.error = null;
 
-    console.log(`✅ Itinerary loaded: ${daysWithSortedItems.length} days`);
+   // console.log(`✅ Itinerary loaded: ${daysWithSortedItems.length} days`);
     return response;
   } catch (err) {
     console.error("❌ getItineraryByTripId failed:", err);

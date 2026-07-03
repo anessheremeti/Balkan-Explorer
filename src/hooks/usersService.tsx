@@ -31,7 +31,7 @@ export const usersService = () => {
       if (error && (error as PostgrestError).code !== "PGRST116") {
         throw error;
       }
-      console.log("Fetched user name:", data);
+      //console.log("Fetched user name:", data);
       return data?.full_name ?? null;
 
     } catch (error) {

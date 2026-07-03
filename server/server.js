@@ -11,6 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 import { log }                                    from './lib/logger.js';
+import { tripCreateLimiter, photoSearchLimiter, statusPollLimiter, guestMigrateLimiter, geocodeLimiter } from './lib/rate-limits.js';
 import { tripCache, photoCache, proxyGeoCache }   from './lib/cache.js';
 import { getVerifiedPlaces, getHealthReport }     from './lib/place-orchestrator.js';
 import { assembleItinerary }                      from './lib/itinerary-assembler.js';
@@ -131,7 +132,7 @@ async function generateAndSaveItinerary(tripId, tripData) {
 
 // ─── Routes: Trip creation ────────────────────────────────────────────────────
 
-app.post('/api/trips/create-fast', async (req, res) => {
+app.post('/api/trips/create-fast', tripCreateLimiter, async (req, res) => {
   try {
     const { tripData, userId, guestId } = req.body;
 
@@ -172,7 +173,7 @@ app.post('/api/trips/create-fast', async (req, res) => {
   }
 });
 
-app.post('/api/trips/migrate-guest', async (req, res) => {
+app.post('/api/trips/migrate-guest', guestMigrateLimiter, async (req, res) => {
   try {
     const { guestId, userId } = req.body;
     if (!guestId || !userId)                              return res.status(400).json({ error: 'guestId and userId are required' });
@@ -196,7 +197,7 @@ app.post('/api/trips/migrate-guest', async (req, res) => {
 
 // ─── Routes: Itinerary status & fast-serve ────────────────────────────────────
 
-app.get('/api/trips/:id/itinerary-status', async (req, res) => {
+app.get('/api/trips/:id/itinerary-status', statusPollLimiter, async (req, res) => {
   const { id } = req.params;
   if (tripCache.has(id)) return res.json({ ready: true });
   try {
@@ -215,7 +216,7 @@ app.get('/api/trips/:id/itinerary-fast', (req, res) => {
 
 // ─── Routes: Photo search ─────────────────────────────────────────────────────
 
-app.get('/api/photos/search', async (req, res) => {
+app.get('/api/photos/search', photoSearchLimiter, async (req, res) => {
   const { q, raw, name, lat, lon } = req.query;
   if (!q) return res.status(400).json({ error: 'Query required' });
   try {
@@ -231,28 +232,13 @@ app.get('/api/photos/search', async (req, res) => {
 
 // ─── Routes: Geocode proxy (frontend map centering) ───────────────────────────
 
-const rateLimits = new Map();
-function rateOk(ip) {
-  const now  = Date.now();
-  const slot = rateLimits.get(ip);
-  if (slot && now - slot.t < 1000 && slot.n >= 1) return false;
-  rateLimits.set(ip, slot && now - slot.t < 1000 ? { t: slot.t, n: slot.n + 1 } : { t: now, n: 1 });
-  if (rateLimits.size > 1000) {
-    for (const [k, v] of rateLimits) { if (now - v.t > 10_000) rateLimits.delete(k); }
-  }
-  return true;
-}
-
-app.get('/api/geocode', async (req, res) => {
+app.get('/api/geocode', geocodeLimiter, async (req, res) => {
   const { q } = req.query;
   if (!q?.trim()) return res.status(400).json({ error: 'Location query required (q parameter)' });
 
   const location = q.trim();
   const cached   = proxyGeoCache.get(location);
   if (cached) return res.json(cached);
-
-  const ip = req.ip ?? req.connection.remoteAddress ?? 'unknown';
-  if (!rateOk(ip)) return res.status(429).json({ error: 'Too many requests — retry in 1 second', retryAfter: 1 });
 
   try {
     const result = await geocodeCity(location);

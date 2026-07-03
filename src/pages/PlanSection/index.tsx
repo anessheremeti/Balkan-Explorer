@@ -133,7 +133,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
        
          const userId = authData?.user?.id;
          const guestId = localStorage.getItem('guest_id')
-        console.log("Authenticated user ID:", userId);
+       // console.log("Authenticated user ID:", userId);
         if(!userId  && !guestId) {
           setError("User not authenticated");
           setLoading(false);
@@ -151,7 +151,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
         }
 
         setTrips(latestTrip);
-        console.log("Fetched trip:", latestTrip);
+       // console.log("Fetched trip:", latestTrip);
 
       } catch (err) {
         console.error("Fetch error:", err);
@@ -198,7 +198,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
 
   const currentTrip = trip ?? trips;
   const tripRange = formatTripRange(currentTrip);
-  console.log("Current trip:", currentTrip);
+ // console.log("Current trip:", currentTrip);
   const guestId = localStorage.getItem('guest_id')
 if (generating) {
     const progress = Math.min(Math.round((pollAttempt / POLL_MAX_ATTEMPTS) * 100), 99);
