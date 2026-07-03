@@ -226,10 +226,10 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
       <main className={`${isDark ? "bg-slate-950" : "bg-white"}`}>
         {/* HERO */}
-        <section className="px-4 sm:px-6 lg:px-12 pt-10 lg:pt-16 pb-12">
-          <div className="max-w-7xl mx-auto flex flex-col items-center text-center gap-6">
+        <section className="px-4 sm:px-6 lg:px-12 pt-8 lg:pt-16 pb-6 sm:pb-12">
+          <div className="max-w-7xl mx-auto flex flex-col items-center text-center gap-4 sm:gap-6">
             <h1
-              className={`font-bold leading-tight tracking-tight text-3xl sm:text-5xl md:text-6xl lg:text-7xl ${
+              className={`font-bold leading-tight tracking-tight text-2xl sm:text-5xl md:text-6xl lg:text-7xl ${
                 isDark ? "text-slate-50" : "text-gray-900"
               }`}
             >
@@ -237,7 +237,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
               <span className="block text-indigo-600">Hidden Balkans</span>
             </h1>
 
-            <p className={`text-lg sm:text-xl max-w-2xl ${isDark ? "text-slate-400" : "text-gray-600"}`}>
+            <p className={`text-base sm:text-xl max-w-2xl ${isDark ? "text-slate-400" : "text-gray-600"}`}>
               {t("create a personalized itenary")}
             </p>
           </div>
@@ -250,7 +250,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
             <form
               onSubmit={onSubmitHandler}
-              className={`border rounded-b-2xl shadow-lg p-5 sm:p-8 lg:p-10 space-y-8 ${
+              className={`border rounded-b-2xl shadow-lg p-4 sm:p-8 lg:p-10 space-y-5 sm:space-y-8 ${
                 isDark ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
               }`}
             >
@@ -298,8 +298,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                 <div className="space-y-2">
                   <label className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
                     {t("destination")}
-                    <span className={`ml-2 text-xs font-normal ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                    <span className={`hidden sm:inline ml-2 text-xs font-normal ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                       Kosovo · Albania · North Macedonia · Montenegro
+                    </span>
+                    <span className={`sm:hidden block text-xs font-normal mt-0.5 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                      Kosovo · Albania · N. Macedonia · Montenegro
                     </span>
                   </label>
 
@@ -338,8 +341,8 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 max-sm:flex flex-wrap">
-                    <div className="space-y-1 max-sm:min-w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
                       <span className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                         {t("departure")}
                       </span>
@@ -368,7 +371,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     </div>
 
                     <div className="space-y-1">
-                      <span className={`text-xs max-sm:min-w-full font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                      <span className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                         {t("return")}
                       </span>
                       <input
@@ -403,7 +406,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                   </label>
 
                   <div
-                    className={`flex items-center mt-6 justify-between border rounded-xl p-2 ${
+                    className={`flex items-center mt-2 sm:mt-6 justify-between border rounded-xl p-2 ${
                       isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
                     }`}
                   >
@@ -426,7 +429,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                   {t("travelStyle")}
                 </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {TRAVEL_STYLES.map(({ id, label, icon: Icon }) => {
                     const active = travel_style === id;
                     return (
@@ -434,7 +437,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                         type="button"
                         key={id}
                         onClick={() => setStyle(id as TravelStyle)}
-                        className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all duration-200 hover:cursor-pointer ${
+                        className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 rounded-xl border transition-all duration-200 hover:cursor-pointer ${
                           active
                             ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
                             : isDark
@@ -442,8 +445,8 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                             : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
                         }`}
                       >
-                        <Icon size={20} />
-                        <span className="font-medium">{label}</span>
+                        <Icon size={18} />
+                        <span className="font-medium text-xs sm:text-sm leading-tight text-center">{label}</span>
                       </button>
                     );
                   })}
@@ -491,7 +494,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-4 rounded-xl hover:cursor-pointer font-semibold hover:bg-slate-800 active:scale-[0.98] transition disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3.5 sm:py-4 rounded-xl hover:cursor-pointer font-semibold text-sm sm:text-base hover:bg-slate-800 active:scale-[0.98] transition disabled:opacity-50"
               >
                 {loading ? "Creating..." : t("discover the hidden Balkans")}
                 <Wand2 className="text-sky-400" size={18} />
