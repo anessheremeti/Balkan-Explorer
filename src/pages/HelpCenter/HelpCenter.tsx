@@ -53,11 +53,10 @@ const HelpCenterPage: React.FC = () => {
   const ctaBg = theme === 'dark' ? 'bg-[#0ea5e9]' : 'bg-[#0ea5e9]';
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900/50' : 'bg-slate-50/50'}`}>
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
       <Navbar />
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900/50' : 'bg-slate-50/50'}`}>
         {/* Hero Section */}
-        <section className={`${bgPrimary} border-b ${borderPrimary} pt-20 pb-16`}>
+        <section className={`${bgPrimary} border-b ${borderPrimary} pt-12 pb-12`}>
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.h1 
               initial={{ opacity: 0, y: -20 }}
@@ -173,7 +172,6 @@ const HelpCenterPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
       <Footer />
     </div>
   );

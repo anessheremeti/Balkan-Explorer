@@ -98,6 +98,7 @@ function buildItem(place, time, dayId, destination) {
     _lat:         place.lat,
     _lon:         place.lon,
     _photo_query: photoQuery,
+    _name_local:  place.name_local ?? null,
   };
 }
 

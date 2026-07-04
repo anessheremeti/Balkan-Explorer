@@ -17,7 +17,7 @@ export const tripSchema = z.object({
       { message: 'Departure date cannot be in the past' }
     ),
   returning_date: z.string().min(1, 'Return date is required'),
-  budget_total: z.number().positive('Budget must be greater than 0'),
+  budget_total: z.number().positive('Budget must be greater at least 500'),
   travelers: z.number().int().min(1).max(20).optional(),
   travel_style: z.string().optional(),
   currency: z.string().optional(),

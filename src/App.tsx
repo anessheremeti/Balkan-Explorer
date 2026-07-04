@@ -18,6 +18,8 @@ import ForgotPassword from './pages/ForgotPassword/ForgotPassword';
 import ResetPassword from './pages/ResetPassword/ResetPassword';
 import MyTravels from './pages/MyTravels/MyTravels';
 import PageTracker from './components/Analytics/PageTracker';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+
 function App() {
   return (
     <>
@@ -25,6 +27,7 @@ function App() {
     <ScrollToTop />
     <PageTracker />
     <Routes>
+      {/* Public routes */}
       <Route path="/" element={<Mainpage />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/login" element={<Login />} />
@@ -38,9 +41,13 @@ function App() {
       <Route path="how-it-works" element={<HowItWorks />} />
       <Route path='/about' element={<AboutUsPage />} />
       <Route path='/travel-tips' element={<TravelTipsPage />} />
-      <Route path='/app-settings' element={<AppSettings />} />
-      <Route path="account-settings" element={<AccountSettings />} />
-      <Route path="/my-travels" element={<MyTravels />} />
+
+      {/* Protected routes — redirect to /login if no access_token */}
+      <Route element={<ProtectedRoute />}>
+        <Route path='/app-settings' element={<AppSettings />} />
+        <Route path="account-settings" element={<AccountSettings />} />
+        <Route path="/my-travels" element={<MyTravels />} />
+      </Route>
     </Routes>
     </>
   )

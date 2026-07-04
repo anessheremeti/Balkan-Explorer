@@ -61,7 +61,7 @@ export async function generateAIThemes(destination, duration, travelStyle) {
   const prompt =
     `Create ${duration} unique, evocative day-theme titles for a trip to "${destination}". ` +
     `Travel style: ${style}.\n` +
-    `Rules: 4–7 words each, inspiring, varied, NO specific place names, NO day numbers.\n` +
+    `Rules: 4–7 words each, inspiring, varied, in ENGLISH only, NO specific place names, NO day numbers.\n` +
     `Return ONLY a valid JSON array of exactly ${duration} strings. No other text.`;
 
   const client = getClient();

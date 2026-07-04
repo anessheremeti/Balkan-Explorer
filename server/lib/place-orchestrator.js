@@ -4,6 +4,7 @@ import { cityPlaceCache } from './cache.js';
 import { log } from './logger.js';
 import { geocodeCity } from './providers/nominatim.js';
 import { fetchPlacesFromOverpass, overpassHealth } from './providers/overpass.js';
+import { resolveName } from './name-utils.js';
 
 const PLACE_TTL = 24 * 60 * 60 * 1000;
 
@@ -61,10 +62,9 @@ async function fetchFromOpenTripMap(lat, lon) {
 
   const buckets = EMPTY_BUCKETS();
   for (const feat of list) {
-    // With format=json the response is SimpleFeature: { xid, name, kinds, point:{lon,lat} }
-    // With format=geojson it would be { geometry:{coordinates:[lon,lat]}, properties:{...} }
-    // We use format=json so coordinates are always in feat.point
-    const name = feat.name?.trim();
+    // OTM SimpleFeature: { xid, name, kinds, point:{lon,lat} }
+    // OTM names come from OSM data and can be in any local script (Cyrillic etc.)
+    const { name, name_local } = resolveName(feat.name, null);
     if (!name) continue;
 
     const fLat = parseFloat(feat.point?.lat);
@@ -81,14 +81,15 @@ async function fetchFromOpenTripMap(lat, lon) {
     if (!buckets[category]) continue;
 
     buckets[category].push({
-      id:       `otm:${feat.xid ?? feat.osm ?? name}`,
+      id:         `otm:${feat.xid ?? feat.osm ?? name}`,
       name,
-      lat:      fLat,
-      lon:      fLon,
+      name_local,
+      lat:        fLat,
+      lon:        fLon,
       category,
-      subtype:  kinds[0]?.trim() ?? 'place',
-      rating:   feat.rate ?? null,
-      wikidata: feat.wikidata ?? null,
+      subtype:    kinds[0]?.trim() ?? 'place',
+      rating:     feat.rate ?? null,
+      wikidata:   feat.wikidata ?? null,
     });
   }
 

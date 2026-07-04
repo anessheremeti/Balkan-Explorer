@@ -1,10 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
-import { Search, Send, Menu, X, ChevronDown, UserCircle2 } from 'lucide-react';
+import { Search, Send, Menu, X, ChevronDown, UserCircle2, Briefcase, Settings, HelpCircle, LogOut } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
 import { usersService } from '../../hooks/usersService';
 import Dropdown from '../Dropdown/Dropdown';
+import LogoutModal from '../LogoutModal/LogoutModal';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from "react-i18next";
 
@@ -17,6 +18,7 @@ const Navbar: React.FC = () => {
   const { getUserName } = usersService();
   const [userName, setUserName] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const storedPrefsString = localStorage.getItem('app_settings');
 const storedPreferences = storedPrefsString ? JSON.parse(storedPrefsString) : {};
 const userTheme = storedPreferences.theme;
@@ -147,37 +149,61 @@ const isDark = theme.theme === 'dark';
       </div>
 
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-100 animate-in slide-in-from-top duration-300">
+        <div className={`md:hidden border-b animate-in slide-in-from-top duration-300 ${userTheme === 'dark' ? 'bg-gray-900 border-slate-700' : 'bg-white border-slate-100'}`}>
           <div className="px-4 pt-2 pb-6 space-y-1">
-           <Link to='/'><MobileNavLink href="#destinations">{t('destinations')}</MobileNavLink></Link>
-            <Link to="/"><MobileNavLink href="#how-it-works">{t('how it works')}</MobileNavLink></Link>
-            <Link to="/community"> 
-              <MobileNavLink href="#community">
-                {t('community')}
-              </MobileNavLink>
-              </Link>
-            
-            <div className="pt-4 mt-4 border-t border-slate-100 flex flex-col space-y-3 px-2">
-              
-           
-              {!access_token ? (
-   <Link to="/login"> <Button variant="ghost" href="#login">
-              {t('login') }
-            </Button> </Link>
-              ) : ''}
-         
+            <Link to='/destinations' onClick={() => setIsMenuOpen(false)}>
+              <MobileNavLink href="/destinations">{t('destinations')}</MobileNavLink>
+            </Link>
+            <Link to="/how-it-works" onClick={() => setIsMenuOpen(false)}>
+              <MobileNavLink href="/how-it-works">{t('how it works')}</MobileNavLink>
+            </Link>
+            <Link to="/community" onClick={() => setIsMenuOpen(false)}>
+              <MobileNavLink href="/community">{t('community')}</MobileNavLink>
+            </Link>
 
+            {access_token ? (
+              <div className={`pt-4 mt-3 border-t ${userTheme === 'dark' ? 'border-slate-700' : 'border-slate-100'}`}>
+                {/* User identity */}
+                
 
-              {!access_token ? (
-                 <Link to="/signup">
-            <Button variant="primary" href="#signup">
-              {t('sign up')}
-            </Button></Link>
-              ) : ''}
-            </div>
+                {[
+                  { to: '/my-travels',   Icon: Briefcase,  label: 'My Travels'   },
+                  { to: '/app-settings', Icon: Settings,   label: 'Settings'     },
+                  { to: '/help-center',  Icon: HelpCircle, label: 'Help Center'  },
+                ].map(({ to, Icon, label }) => (
+                  <Link key={to} to={to} onClick={() => setIsMenuOpen(false)}>
+                    <button className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${userTheme === 'dark' ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'}`}>
+                      <Icon size={17} className="text-slate-400 shrink-0" />
+                      {label}
+                    </button>
+                  </Link>
+                ))}
+
+                <div className={`mt-2 pt-2 border-t ${userTheme === 'dark' ? 'border-slate-700' : 'border-slate-100'}`}>
+                  <button
+                    onClick={() => { setIsMenuOpen(false); setShowLogoutModal(true); }}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut size={17} className="shrink-0" />
+                    Sign out
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="pt-4 mt-3 border-t border-slate-100 flex flex-col space-y-3 px-2">
+                <Link to="/login">
+                  <Button variant="ghost">{t('login')}</Button>
+                </Link>
+                <Link to="/signup">
+                  <Button variant="primary">{t('sign up')}</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
+
+      <LogoutModal isOpen={showLogoutModal} onClose={() => setShowLogoutModal(false)} />
     </nav>
   );
 };

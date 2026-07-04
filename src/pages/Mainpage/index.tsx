@@ -159,7 +159,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
     }
 
     if (budget_total <= 0) {
-      newErrors.budget_total = "Budget must be greater than 0";
+      newErrors.budget_total = "Budget must be at least 500";
     }
 
     setErrors(newErrors);

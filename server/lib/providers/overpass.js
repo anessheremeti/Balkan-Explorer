@@ -1,5 +1,6 @@
 import { CircuitBreaker } from '../circuit-breaker.js';
 import { log } from '../logger.js';
+import { resolveName } from '../name-utils.js';
 
 const UA = 'TravelExplorer/1.0 (open-source travel planner)';
 
@@ -115,7 +116,20 @@ function parseElements(elements) {
   };
 
   for (const el of elements) {
-    const name = el.tags?.name?.trim();
+    const tags = el.tags ?? {};
+
+    // Name resolution priority (most → least English-friendly):
+    // 1. name:en       — explicit English tag
+    // 2. int_name      — international/Latin name (OSM convention)
+    // 3. name:sr-Latn  — Serbian written in Latin script
+    // 4. transliterate — auto-convert Cyrillic → Latin when no Latin tag exists
+    // 5. name          — raw local name as final fallback (e.g. Albanian, already Latin)
+    const latinTag = tags['name:en']?.trim()
+                  ?? tags['int_name']?.trim()
+                  ?? tags['name:sr-Latn']?.trim()
+                  ?? null;
+    const { name, name_local: name_local_display } = resolveName(tags['name'], latinTag);
+
     if (!name) continue;
 
     const { amenity, tourism, leisure, historic } = el.tags ?? {};
@@ -134,16 +148,17 @@ function parseElements(elements) {
     if (!lat || !lon) continue;
 
     buckets[category].push({
-      id:       `osm:${el.type ?? 'node'}:${el.id}`,
+      id:         `osm:${el.type ?? 'node'}:${el.id}`,
       name,
+      name_local: name_local_display,
       lat,
       lon,
       category,
-      subtype:  amenity ?? tourism ?? leisure ?? historic ?? 'place',
-      cuisine:        el.tags?.cuisine        ?? null,
-      website:        el.tags?.website        ?? null,
-      phone:          el.tags?.phone          ?? null,
-      opening_hours:  el.tags?.opening_hours  ?? null,
+      subtype:   amenity ?? tourism ?? leisure ?? historic ?? 'place',
+      cuisine:        tags.cuisine        ?? null,
+      website:        tags.website        ?? null,
+      phone:          tags.phone          ?? null,
+      opening_hours:  tags.opening_hours  ?? null,
     });
   }
 

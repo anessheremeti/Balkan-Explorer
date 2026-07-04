@@ -394,14 +394,14 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
   // Use the pre-built contextual query from metadata if present (set at generation
   // time, e.g. "Star cafe Ulcinj Montenegro"). For legacy items without it, the
   // hook merges title + destination itself at Level 1.
-  const photoTitle = (item.metadata?.photo_query as string | undefined) ?? item.title;
-  const hasQueryContext = !!item.metadata?.photo_query;
-  // Real-world coordinates (when the place came from OpenStreetMap/OpenTripMap)
-  // let the backend fetch the actual Google Places photo of this exact business
-  // instead of guessing from keywords — critical for proper-noun names like
-  // "Chicken Corner" that generic stock-photo search can't recognise.
-  const lat = item.metadata?.lat as number | null | undefined;
-  const lon = item.metadata?.lon as number | null | undefined;
+  const photoTitle = (item.metadata?.photo_query ?? item._photo_query) ?? item.title;
+  const hasQueryContext = !!(item.metadata?.photo_query ?? item._photo_query);
+  // Real-world coordinates — present in metadata (Supabase path) or as _-prefixed
+  // fields (in-memory fast-serve path). Needed for Google Places photo lookup.
+  const lat = item.metadata?.lat ?? item._lat;
+  const lon = item.metadata?.lon ?? item._lon;
+  // Local-language name stored alongside the English-preferred title
+  const nameLocal = item.metadata?.name_local ?? item._name_local ?? null;
   const { url: fetchedUrl, loading: photoLoading } = useItemPhoto(photoTitle, {
     fallback: hasQueryContext ? undefined : destination,
     itemType: item.item_type,
@@ -444,9 +444,16 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
       <div className="flex-1 p-4 flex flex-col justify-between min-h-27">
         <div>
           <div className="flex items-start justify-between gap-2">
-            <h4 className="font-semibold text-slate-900 text-[14px] leading-snug">
-              {item.title}
-            </h4>
+            <div>
+              <h4 className="font-semibold text-slate-900 text-[14px] leading-snug">
+                {item.title}
+              </h4>
+              {nameLocal && (
+                <p className="text-[11px] text-slate-400 leading-snug mt-0.5 italic">
+                  {nameLocal}
+                </p>
+              )}
+            </div>
             <span className={`text-xs font-medium shrink-0 ${config.badgeClass}`}>
               {config.label}
             </span>

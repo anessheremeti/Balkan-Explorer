@@ -14,15 +14,19 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
   const [loading, setLoading] = useState(false);
   const posthog = usePostHog();
 
-  // ESC close + focus
+  // ESC close + focus — only locks scroll when the modal is actually open
   useEffect(() => {
+    if (!isOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
+
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
 
     document.addEventListener("keydown", handleEsc);
     document.body.style.overflow = "hidden";
-
     modalRef.current?.focus();
 
     return () => {

@@ -1,9 +1,17 @@
 import { supabase } from "../../createClient";
 
 
+export interface ItineraryItemMetadata {
+  source?: string;
+  place_id?: string | null;
+  lat?: number | null;
+  lon?: number | null;
+  photo_query?: string | null;
+  name_local?: string | null;
+  [key: string]: unknown;
+}
+
 export interface ItineraryItem {
-  metadata: any;
-  place: any;
   id: string;
   itinerary_day_id: string;
   item_type: string;
@@ -11,6 +19,19 @@ export interface ItineraryItem {
   description: string;
   start_time: string;
   created_at: string;
+  metadata: ItineraryItemMetadata | null;
+  place: {
+    rating?: number | null;
+    review_count?: number | null;
+    image_url?: string | null;
+    price_level?: string | null;
+    [key: string]: unknown;
+  } | null;
+  // Present when item arrives from the in-memory fast-serve cache (not yet persisted)
+  _name_local?: string | null;
+  _lat?: number | null;
+  _lon?: number | null;
+  _photo_query?: string | null;
 }
 
 export interface ItineraryDay {
@@ -126,7 +147,8 @@ export async function getItineraryByTripId(
             title,
             description,
             start_time,
-            end_time
+            end_time,
+            metadata
           )
         )
       `)

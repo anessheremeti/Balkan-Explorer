@@ -16,7 +16,7 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, icon, iconBg, iconColor }) => (
-  <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-sm shadow-slate-200/50 flex flex-col justify-between h-[160px] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+  <div className="bg-white border border-slate-100 rounded-3xl max-sm:w-full p-6 shadow-sm shadow-slate-200/50 flex flex-col justify-between h-[160px] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
     <div className="flex justify-between items-start">
       <div className={`${iconBg} ${iconColor} p-2.5 rounded-xl transition-transform group-hover:scale-110`}>
         {icon}
@@ -73,7 +73,7 @@ const SummaryCards: React.FC<{ userId: string  | null}> = ({ userId }) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
 
       {/* Total Card */}
-      <div className="bg-[#111827] rounded-3xl p-6 shadow-xl shadow-slate-200/50 flex flex-col justify-between h-40 relative overflow-hidden group transition-transform hover:-translate-y-1">
+      <div className="bg-[#111827] rounded-3xl p-6 shadow-xl shadow-slate-200/50 max-sm:w-full flex flex-col justify-between h-40 relative overflow-hidden group transition-transform hover:-translate-y-1">
         <div className="flex justify-between items-start">
           <div className="bg-white/10 p-2.5 rounded-xl">
             <Wallet size={20} className="text-white" />

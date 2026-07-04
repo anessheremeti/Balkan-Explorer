@@ -78,10 +78,17 @@ async function persistItinerary(tripId, days) {
   // Remove _prefixed in-memory fields; map them into the metadata jsonb column.
   const daysToInsert  = days.map(({ itinerary_items: _, ...day }) => day);
   const itemsToInsert = days.flatMap(d =>
-    d.itinerary_items.map(({ _source, _place_id, _lat, _lon, _photo_query, ...item }) => ({
+    d.itinerary_items.map(({ _source, _place_id, _lat, _lon, _photo_query, _name_local, ...item }) => ({
       ...item,
       place_id: null,
-      metadata: { source: _source ?? 'unknown', place_id: _place_id ?? null, lat: _lat ?? null, lon: _lon ?? null, photo_query: _photo_query ?? null },
+      metadata: {
+        source:     _source     ?? 'unknown',
+        place_id:   _place_id   ?? null,
+        lat:        _lat        ?? null,
+        lon:        _lon        ?? null,
+        photo_query: _photo_query ?? null,
+        name_local: _name_local ?? null,
+      },
     }))
   );
 

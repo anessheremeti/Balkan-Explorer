@@ -1,5 +1,4 @@
 import { Calendar, Loader, Users } from "lucide-react";
-import HeaderActions from "../../components/HeaderActions/HeaderActions";
 import SummaryCards from "../../components/SummaryCards/SummaryCards";
 import Timeline from "../../components/Timeline/Timeline";
 import InlineDayMap from "../../components/InlineDayMap/InlineDayMap";
@@ -239,45 +238,40 @@ if (generating) {
   }
 
   return (
-    <div className={`w-full min-h-screen px-24 py-10 ${
+    <div className={`w-full min-h-screen px-4 sm:px-8 lg:px-24 py-6 sm:py-10 ${
       isDark
         ? "bg-gray-900 border-t border-slate-600"
         : "bg-white border-t border-slate-100"
     } text-slate-900 dark:bg-slate-900 dark:text-slate-50`}>
 
-    
-      <div className="flex items-center gap-10 text-gray-500 text-sm">
+      <div className="flex items-center gap-4 sm:gap-10 text-gray-500 text-sm flex-wrap">
         {currentTrip && (
           <div className="flex items-center gap-2">
-          <Calendar size={18} />
-          <span>{tripRange}</span>
-        </div>
+            <Calendar size={16} />
+            <span>{tripRange}</span>
+          </div>
         )}
-        {currentTrip &&
-        <div className="flex items-center gap-2">
-          <Users size={18} />
-           && <span>{t('travelers_count', { count: currentTrip?.travelers ?? 0 })}
-            </span>
-        </div> }
+        {currentTrip && (
+          <div className="flex items-center gap-2">
+            <Users size={16} />
+            <span>{t('travelers_count', { count: currentTrip?.travelers ?? 0 })}</span>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-wrap justify-between items-center mt-4">
-        <h1 className={`text-4xl font-bold ${
-      isDark
-        ? "text-gray-300"
-        : "text-slate-900"
-    }`}>
+      <div className="flex flex-wrap justify-between items-center gap-3 mt-3 sm:mt-4">
+        <h1 className={`text-2xl sm:text-4xl font-bold ${
+          isDark ? "text-gray-300" : "text-slate-900"
+        }`}>
           {currentTrip ? `${t('trip_header')} ${currentTrip.destination}` : ''}
         </h1>
-       {currentTrip && (
-        <HeaderActions onDownloadPDF={downloadPDF} pdfLoading={pdfLoading} />
-       )} 
+      
       </div>
 
       <PDFAuthModal open={showAuthModal} onClose={closeAuthModal} />
 
-      <div className="grid gap-6 mt-10 sm:grid-cols-6 lg:grid-cols-12">
-        <div className="col-span-8 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 sm:mt-10">
+        <div className="lg:col-span-8 space-y-6">
           <SummaryCards userId={userId || guestId} />
           <Timeline
             pendingTripId={pendingTripId}
@@ -286,7 +280,7 @@ if (generating) {
           />
         </div>
 
-        <div className="col-span-4">
+        <div className="lg:col-span-4 hidden lg:block">
           <div className="sticky top-6 space-y-4">
             <InlineDayMap
               tripId={currentTrip?.id ?? null}
