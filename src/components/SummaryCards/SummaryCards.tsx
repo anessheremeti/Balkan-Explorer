@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Wallet, Car, Bed, Ticket } from 'lucide-react';
 import { type Trip } from '../../hooks/itineraryService';
-import { calculateBudgetWithDistance } from './calculateBudgetWithDistance';
+import { calculateBudgetWithDistance, type BudgetBreakdown } from './calculateBudgetWithDistance';
 import tripService from "../../hooks/tripService";
 import { supabase } from '../../../createClient';
 import {useTranslation} from 'react-i18next';
@@ -16,7 +16,7 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, icon, iconBg, iconColor }) => (
-  <div className="bg-white border border-slate-100 rounded-3xl max-sm:w-full p-6 shadow-sm shadow-slate-200/50 flex flex-col justify-between h-[160px] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+  <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm shadow-slate-200/50 flex flex-col justify-between h-[160px] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
     <div className="flex justify-between items-start">
       <div className={`${iconBg} ${iconColor} p-2.5 rounded-xl transition-transform group-hover:scale-110`}>
         {icon}
@@ -36,7 +36,7 @@ const SummaryCards: React.FC<{ userId: string  | null}> = ({ userId }) => {
   const { t } = useTranslation('itinerary');
 
 
-  const [budgetData, setBudgetData] = useState<any>(null);
+  const [budgetData, setBudgetData] = useState<BudgetBreakdown | null>(null);
   const [latestTrip, setLatestTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
 

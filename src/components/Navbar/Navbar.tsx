@@ -127,7 +127,7 @@ const isDark = theme.theme === 'dark';
 
 
               {!access_token ? (
-                 <Link to="/signup">
+                 <Link className='flex min-w-fit' to="/signup">
             <Button variant="primary" href="#signup">
               {t('sign up')}
             </Button></Link>
@@ -195,7 +195,7 @@ const isDark = theme.theme === 'dark';
                   <Button variant="ghost">{t('login')}</Button>
                 </Link>
                 <Link to="/signup">
-                  <Button variant="primary">{t('sign up')}</Button>
+                  <Button className='text-wrap' variant="primary">{t('sign up')}</Button>
                 </Link>
               </div>
             )}

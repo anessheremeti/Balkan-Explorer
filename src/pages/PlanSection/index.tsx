@@ -21,7 +21,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
   const POLL_INTERVAL_MS = 2000;
   const POLL_MAX_ATTEMPTS = 75; // 150 s — covers 55 s AI timeout + fallback save
   const {t} = useTranslation('itinerary');
-  const { download: downloadPDF, loading: pdfLoading, showAuthModal, closeAuthModal } = useDownloadPDF();
+  const { showAuthModal, closeAuthModal } = useDownloadPDF();
   const [theme, setTheme] = useState<Theme>("light");
   const [trips, setTrips] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(false);
@@ -196,27 +196,29 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
 if (generating) {
     const progress = Math.min(Math.round((pollAttempt / POLL_MAX_ATTEMPTS) * 100), 99);
     return (
-      <div className="space-y-6">
-        <div className="border border-sky-100 bg-sky-50 rounded-2xl p-8 py-8 text-center space-y-4">
-          <div className="relative w-16 h-16 mx-auto">
-            <Loader className="w-16 h-16 animate-spin text-sky-200" />
-            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-sky-500">
-              {progress}%
-            </span>
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-800 text-base">
-              {t('building_itinerary')}
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              {t('building_subtitle')}
-            </p>
-          </div>
-          <div className="w-full bg-sky-100 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-sky-500 h-1.5 rounded-full transition-all duration-700"
-              style={{ width: `${progress}%` }}
-            />
+      <div className={`w-full min-h-screen px-4 sm:px-8 lg:px-24 py-6 sm:py-10 ${isDark ? "bg-gray-900" : "bg-white"}`}>
+        <div className="max-w-7xl mx-auto">
+          <div className="border border-sky-100 bg-sky-50 rounded-2xl p-8 text-center space-y-4">
+            <div className="relative w-16 h-16 mx-auto">
+              <Loader className="w-16 h-16 animate-spin text-sky-200" />
+              <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-sky-500">
+                {progress}%
+              </span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 text-base">
+                {t('building_itinerary')}
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                {t('building_subtitle')}
+              </p>
+            </div>
+            <div className="w-full bg-sky-100 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-sky-500 h-1.5 rounded-full transition-all duration-700"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -224,10 +226,10 @@ if (generating) {
   }
 
   // ── Loading state (initial fetch) ────────────────────────────────────────
-  if (loading ) {
+  if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center py-12">
+      <div className={`w-full min-h-screen px-4 sm:px-8 lg:px-24 py-6 sm:py-10 ${isDark ? "bg-gray-900" : "bg-white"}`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-center py-12">
           <div className="text-center space-y-3">
             <Loader className="w-8 h-8 animate-spin mx-auto text-sky-500" />
             <p className="text-sm text-slate-500">{t('loading_itinerary')}</p>
@@ -243,6 +245,7 @@ if (generating) {
         ? "bg-gray-900 border-t border-slate-600"
         : "bg-white border-t border-slate-100"
     } text-slate-900 dark:bg-slate-900 dark:text-slate-50`}>
+      <div className="max-w-7xl mx-auto">
 
       <div className="flex items-center gap-4 sm:gap-10 text-gray-500 text-sm flex-wrap">
         {currentTrip && (
@@ -281,7 +284,7 @@ if (generating) {
         </div>
 
         <div className="lg:col-span-4 hidden lg:block">
-          <div className="sticky top-6 space-y-4">
+          <div className="sticky top-20 space-y-4">
             <InlineDayMap
               tripId={currentTrip?.id ?? null}
               activeDayNumber={selectedMapDayNumber}
@@ -291,6 +294,8 @@ if (generating) {
           </div>
         </div>
       </div>
+
+      </div>{/* max-w-7xl */}
     </div>
   );
 };

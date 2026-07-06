@@ -414,7 +414,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
   return (
     <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden flex shadow-sm hover:shadow-md transition-shadow duration-200">
       {/* Thumbnail */}
-      <div className="relative w-40 shrink-0 min-h-27">
+      <div className="relative w-24 sm:w-36 md:w-40 shrink-0 min-h-27">
         {photoLoading ? (
           <div className={`w-full h-full absolute inset-0 animate-pulse ${config.placeholderBg}`} />
         ) : imageUrl ? (
