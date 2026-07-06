@@ -10,6 +10,7 @@ import {
   DollarSign,
   Euro,
   PoundSterling as Pound,
+  Loader2,
 } from "lucide-react";
 import React, { useState, useMemo } from "react";
 
@@ -28,8 +29,6 @@ import DestinationCombobox from "../../components/DestinationCombobox/Destinatio
 
 type TravelStyle = "road" | "bus" | "resort";
 type Currency = "USD" | "EUR" | "GBP";
-
-const userId = sessionStorage.getItem("user_id");
 
 interface MainpageProps {
   onTripCreated?: (tripId: string) => void;
@@ -75,7 +74,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const roadTripReturn =  toDateString(new Date(Date.now() + 31 * 86_400_000)); 
   const [starting_date, setStartingDate] = useState<string>(today);
   const [returning_date, setReturningDate] = useState<string>(defaultReturn);
-  const [starting_location, setStarting_location] = useState<string>("Pejë, Kosovo");
+  const [starting_location, setStarting_location] = useState<string>("");
 
   // Pre-fill destination from Destinations page click — resolve to dataset entry if possible
   const [destination, setDestination] = useState<string>(() => {
@@ -100,10 +99,44 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const [loading, setLoading] = useState(false);
   const [pendingTripId, setPendingTripId] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('intro_shown'));
+  const [detecting, setDetecting] = useState(false);
+  const [userId] = useState<string | null>(() => sessionStorage.getItem("user_id"));
 
   const increaseTravelers = () => setTravelers((prev) => Math.min(prev + 1, 20));
   const decreaseTravelers = () => setTravelers((prev) => Math.max(1, prev - 1));
 
+  const handleDetectLocation = () => {
+    
+    if (!navigator.geolocation) return;
+    setDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json&accept-language=en`
+          );
+          const data = await res.json();
+          const addr = data.address ?? {};
+          const city = addr.city ?? addr.town ?? addr.village ?? addr.municipality ?? addr.county ?? '';
+          const country = addr.country ?? '';
+          const label = [city, country].filter(Boolean).join(', ');
+          setStarting_location(label || (data.display_name?.split(',')[0] ?? ''));
+        } catch {
+          // silently fail — user can type manually
+        } finally {
+          setDetecting(false);
+        }
+      },
+      () => setDetecting(false),
+      { timeout: 10_000, maximumAge: 60_000 }
+    );
+  };
+  const onHandleStartingLocation = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    if (inputValue === '' || /^[\p{L}\s,\-'.]+$/u.test(inputValue)) {
+      setStarting_location(inputValue);
+    }
+  };
   const guestId = localStorage.getItem("guest_id");
   if (!guestId) {
     const id = crypto.randomUUID();
@@ -119,21 +152,15 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const validate = () => {
     const newErrors: Errors = {};
 
-    if (!starting_location.trim()) {
+    // starting_location
+    const trimmedStart = starting_location.trim();
+    if (!trimmedStart) {
       newErrors.starting_location = "Starting location is required";
-    }
-    const sameCountry = ['Kosovo', 'Albania', 'North Macedonia', 'Montenegro'].some(
-      country => starting_location.endsWith(country) && destination.endsWith(country)
-    );
-    if (sameCountry) {
-      newErrors.destination = 'Your destination must be in a different country than your starting location.';
+    } else if (trimmedStart.length < 2) {
+      newErrors.starting_location = "Please enter a valid location";
     }
 
-    if (travel_style === 'bus' && (returning_date < defaultReturn || returning_date > busReturn)) {
-      newErrors.returning_date = 'Bus travel requires a trip length between 7 and 14 days.';
-    } else if ((travel_style === 'road' || travel_style === 'resort') && returning_date > roadTripReturn) {
-      newErrors.returning_date = 'This travel style supports a maximum of 31 days.';
-    }
+    // destination required + confirmed + allowed
     if (!destination.trim()) {
       newErrors.destination = "Destination is required";
     } else if (!destinationConfirmed) {
@@ -142,10 +169,23 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
       newErrors.destination = `Only destinations in ${ALLOWED_COUNTRIES.join(", ")} are supported`;
     }
 
-    if (budget_total < 500) {
-      newErrors.budget_total = "Budget should be at least 500";
+    // same location / same country (only when both fields are valid)
+    if (!newErrors.starting_location && !newErrors.destination) {
+      const startNorm = trimmedStart.toLowerCase();
+      const destNorm = destination.trim().toLowerCase();
+      if (startNorm === destNorm) {
+        newErrors.destination = "Starting location and destination cannot be the same.";
+      } else {
+        const sameCountry = ALLOWED_COUNTRIES.some(
+          country => startNorm.includes(country.toLowerCase()) && destNorm.includes(country.toLowerCase())
+        );
+        if (sameCountry) {
+          newErrors.destination = "Your destination must be in a different country than your starting location.";
+        }
+      }
     }
-   
+
+    // dates
     if (!starting_date) {
       newErrors.starting_date = "Departure date is required";
     } else if (starting_date < today) {
@@ -156,10 +196,15 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
       newErrors.returning_date = "Return date is required";
     } else if (returning_date <= starting_date) {
       newErrors.returning_date = "Return date must be after departure date";
+    } else if (travel_style === 'bus' && (returning_date < defaultReturn || returning_date > busReturn)) {
+      newErrors.returning_date = "Bus travel requires a trip length between 7 and 14 days.";
+    } else if ((travel_style === 'road' || travel_style === 'resort') && returning_date > roadTripReturn) {
+      newErrors.returning_date = "This travel style supports a maximum of 31 days.";
     }
 
-    if (budget_total <= 0) {
-      newErrors.budget_total = "Budget must be at least 500";
+    // budget
+    if (!budget_total || budget_total < 500) {
+      newErrors.budget_total = "Budget should be at least $500";
     }
 
     setErrors(newErrors);
@@ -189,13 +234,12 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
         await import("../../hooks/submitService");
       const result = await submitServiceWithItineraryFast(formData);
       sessionStorage.setItem('iterinary', JSON.stringify(formData));
-      console.log(formData);
       if (result?.trip?.id) {
         setStartingDate(today);
         setReturningDate(defaultReturn);
         setTravelers(2);
         setStyle("road");
-        setBudget_total(0);
+        setBudget_total(500);
         setCurrency("USD");
         setErrors({});
         localStorage.removeItem("selectedDestination");
@@ -269,8 +313,8 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     />
                     <input
                       type="text"
+                      onChange={onHandleStartingLocation}
                       value={starting_location}
-                      onChange={(e) => setStarting_location(e.target.value)}
                       placeholder={t("where")}
                       className={`w-full pl-10 pr-24 py-3 rounded-xl border ${
                         isDark
@@ -280,10 +324,17 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     />
                     <button
                       type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-sky-100 text-sky-700"
+                      onClick={handleDetectLocation}
+                      disabled={detecting}
+                      
+                      className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-sky-100 text-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                     >
-                      <Target size={14} />
-                      Detect
+                      {detecting ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Target size={14} />
+                      )}
+                      {detecting ? 'Detecting…' : 'Detect'}
                     </button>
                   </div>
 
@@ -310,8 +361,10 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     value={destination}
                     confirmed={destinationConfirmed}
                     onChange={(val, isConfirmed) => {
-                      setDestination(val);
-                      setDestinationConfirmed(isConfirmed);
+                      if (val === '' || /^[\p{L}\s,\-'.]+$/u.test(val)) {
+                        setDestination(val);
+                  }
+                     setDestinationConfirmed(isConfirmed);
                       if (isConfirmed) setErrors((prev) => ({ ...prev, destination: undefined }));
                     }}
                     isDark={isDark}
