@@ -23,6 +23,7 @@ import { useTranslation } from "react-i18next";
 import {
   isDestinationAllowed,
   ALLOWED_COUNTRIES,
+  BALKAN_DESTINATIONS,
   findDestinationOption,
 } from "../../constants/allowedDestinations";
 import DestinationCombobox from "../../components/DestinationCombobox/DestinationCombobox";
@@ -51,6 +52,32 @@ function deriveDuration(start: string, end: string): number {
   return Math.ceil(
     (new Date(end).getTime() - new Date(start).getTime()) / 86_400_000
   );
+}
+
+function normCity(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+function editDistance(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+  return dp[m][n];
+}
+
+function isSameCityFuzzy(inputCity: string, knownCity: string): boolean {
+  const a = normCity(inputCity);
+  const b = normCity(knownCity);
+  if (a === b) return true;
+  // ≤3 chars: exact only (avoids "Bar" vs "Bari"); 4-5 chars: 1 edit; 6+: 2 edits
+  const threshold = b.length <= 3 ? 0 : b.length <= 5 ? 1 : 2;
+  return editDistance(a, b) <= threshold;
 }
 
 const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
@@ -197,8 +224,18 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
     if (!newErrors.starting_location && !newErrors.destination) {
       const startNorm = trimmedStart.toLowerCase();
       const destNorm = destination.trim().toLowerCase();
+
+      const startCity = trimmedStart.split(',')[0].trim();
+      const destCity = destination.split(',')[0].trim();
+      // Find the canonical allowlist city that the destination resolves to
+      const canonicalCity = BALKAN_DESTINATIONS
+        .flatMap(d => [...d.cities])
+        .find(c => isSameCityFuzzy(c, destCity));
+
       if (startNorm === destNorm) {
         newErrors.destination = "Starting location and destination cannot be the same.";
+      } else if (canonicalCity && isSameCityFuzzy(startCity, canonicalCity)) {
+        newErrors.destination = "Your starting location appears to be the same city as your destination.";
       } else {
         const sameCountry = ALLOWED_COUNTRIES.some(
           country => startNorm.includes(country.toLowerCase()) && destNorm.includes(country.toLowerCase())
@@ -340,6 +377,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                       onChange={onHandleStartingLocation}
                       value={starting_location}
                       placeholder={t("where")}
+                      maxLength={40}
                       className={`w-full pl-10 pr-24 py-3 rounded-xl border ${
                         isDark
                           ? "bg-slate-800 text-slate-300 border-slate-700 placeholder:text-slate-500"
@@ -370,6 +408,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                   {detectError && !errors.starting_location && (
                     <p className={`text-xs ${isDark ? "text-amber-400" : "text-amber-600"}`}>
                       {detectError}
+                    </p>
+                  )}
+                  {starting_location.length > 28 && (
+                    <p className={`text-xs text-right ${starting_location.length >= 40 ? "text-red-500" : isDark ? "text-slate-500" : "text-slate-400"}`}>
+                      {starting_location.length}/40
                     </p>
                   )}
                 </div>

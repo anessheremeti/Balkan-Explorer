@@ -6,7 +6,7 @@ import { log } from './logger.js';
 const MODELS = [
   { id: 'google/gemini-2.0-flash-exp:free',            timeoutMs: 15_000 },
   { id: 'deepseek/deepseek-r1-distill-llama-70b:free', timeoutMs: 20_000 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',      timeoutMs: 15_000 },
+  { id: 'meta-llama/llama-4-scout:free',                timeoutMs: 15_000 },
   { id: 'qwen/qwen3-8b:free',                          timeoutMs: 12_000 },
   { id: 'microsoft/phi-4:free',                        timeoutMs: 12_000 },
 ];
