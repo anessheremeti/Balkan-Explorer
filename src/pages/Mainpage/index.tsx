@@ -342,8 +342,8 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                       placeholder={t("where")}
                       className={`w-full pl-10 pr-24 py-3 rounded-xl border ${
                         isDark
-                          ? "bg-slate-800 text-slate-500 border-slate-700"
-                          : "bg-slate-50 border-slate-200"
+                          ? "bg-slate-800 text-slate-300 border-slate-700 placeholder:text-slate-500"
+                          : "bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400"
                       }`}
                     />
                     <button
@@ -552,8 +552,8 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     placeholder="e.g. 1500"
                     className={`w-full pl-10 pr-20 py-3 rounded-xl border font-semibold ${
                       isDark
-                        ? "bg-slate-800 text-slate-500 border-slate-700"
-                        : "bg-slate-50 border-slate-200"
+                        ? "bg-slate-800 text-slate-300 border-slate-700 placeholder:text-slate-500"
+                        : "bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400"
                     }`}
                   />
                   <select
