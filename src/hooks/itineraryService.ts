@@ -8,6 +8,15 @@ export interface ItineraryItemMetadata {
   lon?: number | null;
   photo_query?: string | null;
   name_local?: string | null;
+  image_url?: string | null;
+  // transport
+  duration?: string | null;
+  distance?: string | null;
+  // stay / food / activity
+  rating?: number | null;
+  review_count?: number | null;
+  distance_from?: string | null;
+  price_level?: string | null;
   [key: string]: unknown;
 }
 

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Search, Send, Menu, X, ChevronDown, UserCircle2, Briefcase, Settings, HelpCircle, LogOut } from 'lucide-react';
+import {  Send, Menu, X, ChevronDown, UserCircle2, Briefcase, Settings, HelpCircle, LogOut } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
 import { usersService } from '../../hooks/usersService';

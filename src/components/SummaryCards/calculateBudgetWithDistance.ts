@@ -70,7 +70,7 @@ function getRegionFromDestination(destination: string): string {
   return "default";
 }
 
-interface BudgetBreakdown {
+export interface BudgetBreakdown {
   total_budget: number;
   currency: string;
   breakdown: {
