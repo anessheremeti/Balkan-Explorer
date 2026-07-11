@@ -105,30 +105,54 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const increaseTravelers = () => setTravelers((prev) => Math.min(prev + 1, 20));
   const decreaseTravelers = () => setTravelers((prev) => Math.max(1, prev - 1));
 
+  const [detectError, setDetectError] = useState<string | null>(null);
+
   const handleDetectLocation = () => {
-    
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setDetectError('Geolocation is not supported by your browser.');
+      return;
+    }
+
     setDetecting(true);
+    setDetectError(null);
+
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json&accept-language=en`
           );
+          if (!res.ok) throw new Error('Geocoding request failed');
           const data = await res.json();
           const addr = data.address ?? {};
-          const city = addr.city ?? addr.town ?? addr.village ?? addr.municipality ?? addr.county ?? '';
+          const city =
+            addr.city ?? addr.town ?? addr.village ??
+            addr.municipality ?? addr.county ?? '';
           const country = addr.country ?? '';
           const label = [city, country].filter(Boolean).join(', ');
-          setStarting_location(label || (data.display_name?.split(',')[0] ?? ''));
+          const result = label || (data.display_name?.split(',')[0]?.trim() ?? '');
+          if (!result) throw new Error('Location could not be resolved');
+          setStarting_location(result);
+          setDetectError(null);
         } catch {
-          // silently fail — user can type manually
+          setDetectError('Could not resolve your location. Please type it manually.');
         } finally {
           setDetecting(false);
         }
       },
-      () => setDetecting(false),
-      { timeout: 10_000, maximumAge: 60_000 }
+      (err) => {
+        setDetecting(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setDetectError('Location access denied. Enable it in your browser settings and try again.');
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          setDetectError('Your position is currently unavailable. Please type it manually.');
+        } else if (err.code === err.TIMEOUT) {
+          setDetectError('Location request timed out. Please try again.');
+        } else {
+          setDetectError('Could not detect your location. Please type it manually.');
+        }
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 }
     );
   };
   const onHandleStartingLocation = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -341,6 +365,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                   {errors.starting_location && (
                     <p className={`text-xs ${isDark ? "text-red-400" : "text-red-500"}`}>
                       {errors.starting_location}
+                    </p>
+                  )}
+                  {detectError && !errors.starting_location && (
+                    <p className={`text-xs ${isDark ? "text-amber-400" : "text-amber-600"}`}>
+                      {detectError}
                     </p>
                   )}
                 </div>

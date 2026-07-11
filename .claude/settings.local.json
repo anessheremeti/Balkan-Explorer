@@ -9,7 +9,13 @@
       "Bash(node --input-type=module --eval \"import\\('./server/server.js'\\).catch\\(e => { console.error\\(e.message\\); process.exit\\(1\\); }\\)\")",
       "WebFetch(domain:dogstudio.co)",
       "Skill(artifact-design)",
-      "Skill(artifact-design:*)"
+      "Skill(artifact-design:*)",
+      "PowerShell(node \"C:\\\\Users\\\\anes\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-anes-Desktop-Projects-travel-explorer\\\\c212ad4b-4f2f-4526-933d-5f014c7d1473\\\\scratchpad\\\\validation-tests.mjs\")",
+      "Bash(npx playwright *)",
+      "Bash(node \"C:/Users/anes/AppData/Local/Temp/claude/c--Users-anes-Desktop-Projects-travel-explorer/c212ad4b-4f2f-4526-933d-5f014c7d1473/scratchpad/geo-test.mjs\")",
+      "Bash(cp \"C:/Users/anes/AppData/Local/Temp/claude/c--Users-anes-Desktop-Projects-travel-explorer/c212ad4b-4f2f-4526-933d-5f014c7d1473/scratchpad/geo-test.mjs\" \"c:/Users/anes/Desktop/Projects/travel-explorer/geo-test.mjs\")",
+      "Bash(node geo-test.mjs)",
+      "Bash(node server/server.js)"
     ]
   }
 }

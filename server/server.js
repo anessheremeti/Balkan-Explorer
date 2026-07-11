@@ -38,7 +38,19 @@ if (missing.length) {
 const app = express();
 app.use(express.json());
 const FRONTEND_URL = (process.env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/$/, '');
-app.use(cors({ origin: FRONTEND_URL }));
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // No origin = same-origin request or curl — always allow.
+    if (!origin) return callback(null, true);
+    // Production: only the configured FRONTEND_URL is accepted.
+    if (IS_PROD) return callback(origin === FRONTEND_URL ? null : new Error('Not allowed by CORS'), origin === FRONTEND_URL);
+    // Development: allow any localhost port (5173, 5174, 5175 … Vite auto-bumps when port is busy).
+    const isLocalhost = /^https?:\/\/localhost:\d+$/.test(origin);
+    callback(isLocalhost ? null : new Error('Not allowed by CORS'), isLocalhost);
+  },
+}));
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
