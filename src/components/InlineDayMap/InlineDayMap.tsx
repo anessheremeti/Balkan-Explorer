@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
-import { MapPin } from 'lucide-react';
+import { MapPin, Maximize2 } from 'lucide-react';
 import { useItineraryForTrip } from '../../hooks/useItineraryForTrip';
 import { loadMapState, saveMapState } from '../../hooks/useSessionMapState';
+import DayMapModal from '../DayMapModal/DayMapModal';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,7 @@ const InlineDayMap: React.FC<InlineDayMapProps> = ({
 }) => {
   const [activeIdx, setActiveIdx]   = useState(0);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [expanded, setExpanded]     = useState(false);
 
   const mapRef      = useRef<google.maps.Map | null>(null);
   const markersRef  = useRef<google.maps.Marker[]>([]);
@@ -328,26 +330,38 @@ const InlineDayMap: React.FC<InlineDayMapProps> = ({
   // ── Main map view ─────────────────────────────────────────────────────────────
 
   return (
+    <>
     <div className={`rounded-2xl border overflow-hidden ${base} flex flex-col h-85 sm:h-120`}>
 
-      {/* Day tabs */}
-      <div className={`flex items-center gap-1 px-3 py-2 border-b shrink-0 overflow-x-auto ${divider}`}
-           style={{ scrollbarWidth: 'none' }}>
-        {days.map((day, idx) => (
-          <button
-            key={day.id}
-            onClick={() => handleDayTab(idx)}
-            className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
-              idx === activeIdx
-                ? 'bg-[#0ea5e9] text-white shadow-sm'
-                : isDark
-                ? 'text-slate-400 hover:bg-slate-700'
-                : 'text-slate-500 hover:bg-slate-50'
-            }`}
-          >
-            Day {day.day_number}
-          </button>
-        ))}
+      {/* Day tabs + expand */}
+      <div className={`flex items-center gap-1 px-3 py-2 border-b shrink-0 ${divider}`}>
+        <div className="flex items-center gap-1 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {days.map((day, idx) => (
+            <button
+              key={day.id}
+              onClick={() => handleDayTab(idx)}
+              className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
+                idx === activeIdx
+                  ? 'bg-[#0ea5e9] text-white shadow-sm'
+                  : isDark
+                  ? 'text-slate-400 hover:bg-slate-700'
+                  : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              Day {day.day_number}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setExpanded(true)}
+          aria-label="Expand map"
+          title="Expand map"
+          className={`shrink-0 p-1.5 rounded-lg transition-colors ${
+            isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-50'
+          }`}
+        >
+          <Maximize2 size={14} />
+        </button>
       </div>
 
       {/* Map area */}
@@ -407,6 +421,22 @@ const InlineDayMap: React.FC<InlineDayMapProps> = ({
         </div>
       )}
     </div>
+
+    {/* Full-screen day map with numbered location list (same as My Travels) */}
+    <DayMapModal
+      tripId={tripId ?? undefined}
+      days={days}
+      initialDayIndex={activeIdx}
+      isOpen={expanded}
+      onClose={() => setExpanded(false)}
+      isDark={isDark}
+      stateScope="planSection"
+      onDayChange={(idx) => {
+        setActiveIdx(idx);
+        if (days[idx]) onDayChange?.(days[idx].day_number);
+      }}
+    />
+    </>
   );
 };
 

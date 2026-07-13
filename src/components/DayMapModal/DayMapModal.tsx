@@ -62,6 +62,10 @@ interface DayMapModalProps {
   isOpen: boolean;
   onClose: () => void;
   isDark: boolean;
+  /** Session-state scope to persist trip/day under (defaults to MyTravels behaviour) */
+  stateScope?: 'planSection' | 'myTravels';
+  /** Notifies the parent when the user switches day inside the modal */
+  onDayChange?: (dayIndex: number) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -73,8 +77,15 @@ const DayMapModal: React.FC<DayMapModalProps> = ({
   isOpen,
   onClose,
   isDark,
+  stateScope = 'myTravels',
+  onDayChange,
 }) => {
   const [activeIdx, setActiveIdx]   = useState(initialDayIndex);
+
+  const changeDay = (idx: number) => {
+    setActiveIdx(idx);
+    onDayChange?.(idx);
+  };
   const [isMapReady, setIsMapReady] = useState(false);
 
   // Encode selection as { dayIdx, id } so it auto-clears when the day changes
@@ -94,11 +105,16 @@ const DayMapModal: React.FC<DayMapModalProps> = ({
     libraries: LIBRARIES,
   });
 
+  // Re-sync to the requested day each time the modal opens (state persists across closes)
+  useEffect(() => {
+    if (isOpen) setActiveIdx(initialDayIndex);
+  }, [isOpen, initialDayIndex]);
+
   // Persist which trip / day the modal is open for (session restore in MyTravels)
   useEffect(() => {
     if (!isOpen || !tripId) return;
-    saveMapState('myTravels', { tripId, dayIdx: activeIdx });
-  }, [isOpen, tripId, activeIdx]);
+    saveMapState(stateScope, { tripId, dayIdx: activeIdx });
+  }, [isOpen, tripId, activeIdx, stateScope]);
 
   // ── Map lifecycle ──────────────────────────────────────────────────────────
 
@@ -282,7 +298,7 @@ const DayMapModal: React.FC<DayMapModalProps> = ({
                 {days.map((day, idx) => (
                   <button
                     key={day.id}
-                    onClick={() => setActiveIdx(idx)}
+                    onClick={() => changeDay(idx)}
                     className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                       idx === activeIdx
                         ? 'bg-[#0ea5e9] text-white shadow-sm'
@@ -437,7 +453,7 @@ const DayMapModal: React.FC<DayMapModalProps> = ({
             {/* ── Mobile-only bottom day navigation ─────────────────────── */}
             <div className={`sm:hidden flex items-center justify-between px-4 py-2.5 border-t shrink-0 ${border}`}>
               <button
-                onClick={() => setActiveIdx(i => Math.max(0, i - 1))}
+                onClick={() => changeDay(Math.max(0, activeIdx - 1))}
                 disabled={activeIdx === 0}
                 className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 ${sub} ${hover}`}
               >
@@ -448,7 +464,7 @@ const DayMapModal: React.FC<DayMapModalProps> = ({
                 Day {activeDay?.day_number ?? '—'} of {days.length}
               </span>
               <button
-                onClick={() => setActiveIdx(i => Math.min(days.length - 1, i + 1))}
+                onClick={() => changeDay(Math.min(days.length - 1, activeIdx + 1))}
                 disabled={activeIdx === days.length - 1}
                 className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 ${sub} ${hover}`}
               >

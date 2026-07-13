@@ -15,7 +15,9 @@
       "Bash(node \"C:/Users/anes/AppData/Local/Temp/claude/c--Users-anes-Desktop-Projects-travel-explorer/c212ad4b-4f2f-4526-933d-5f014c7d1473/scratchpad/geo-test.mjs\")",
       "Bash(cp \"C:/Users/anes/AppData/Local/Temp/claude/c--Users-anes-Desktop-Projects-travel-explorer/c212ad4b-4f2f-4526-933d-5f014c7d1473/scratchpad/geo-test.mjs\" \"c:/Users/anes/Desktop/Projects/travel-explorer/geo-test.mjs\")",
       "Bash(node geo-test.mjs)",
-      "Bash(node server/server.js)"
+      "Bash(node server/server.js)",
+      "PowerShell($ports = @\\(3001, 5173, 5174\\); foreach \\($p in $ports\\) { $conn = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue; if \\($conn\\) { \"Port ${p}: LISTENING\" } else { \"Port ${p}: free\" } })",
+      "PowerShell(Remove-Item \"c:\\\\Users\\\\anes\\\\Desktop\\\\Projects\\\\travel-explorer\\\\expand-map-test.tmp.mjs\" -Confirm:$false)"
     ]
   }
 }

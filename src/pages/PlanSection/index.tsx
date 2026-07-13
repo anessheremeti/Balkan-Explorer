@@ -31,6 +31,18 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
   const [getItineraryByTripId, setGetItineraryByTripId] = useState<((id: string) => Promise<unknown>) | null>(null);
   const [selectedMapDayNumber, setSelectedMapDayNumber] = useState<number | null>(null);
 
+  // Single map instance: sidebar on desktop, below the timeline on mobile.
+  // matchMedia (not CSS hiding) so we never mount two Google Maps at once.
+  const [isDesktop, setIsDesktop] = useState<boolean>(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
       // Initialize the service hook
       useEffect(() => {
         const initService = async () => {
@@ -276,6 +288,15 @@ if (generating) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 sm:mt-10">
         <div className="lg:col-span-8 space-y-6">
           <SummaryCards userId={userId || guestId} />
+          {/* Mobile: day-route map above the timeline so "Map" clicks have a target */}
+          {!isDesktop && (
+            <InlineDayMap
+              tripId={currentTrip?.id ?? null}
+              activeDayNumber={selectedMapDayNumber}
+              onDayChange={(dayNumber) => setSelectedMapDayNumber(dayNumber)}
+              isDark={isDark}
+            />
+          )}
           <Timeline
             pendingTripId={pendingTripId}
             onViewOnMap={(dayNumber) => setSelectedMapDayNumber(dayNumber)}
@@ -283,16 +304,18 @@ if (generating) {
           />
         </div>
 
-        <div className="lg:col-span-4 hidden lg:block">
-          <div className="sticky top-20 space-y-4">
-            <InlineDayMap
-              tripId={currentTrip?.id ?? null}
-              activeDayNumber={selectedMapDayNumber}
-              onDayChange={(dayNumber) => setSelectedMapDayNumber(dayNumber)}
-              isDark={isDark}
-            />
+        {isDesktop && (
+          <div className="lg:col-span-4">
+            <div className="sticky top-20 space-y-4">
+              <InlineDayMap
+                tripId={currentTrip?.id ?? null}
+                activeDayNumber={selectedMapDayNumber}
+                onDayChange={(dayNumber) => setSelectedMapDayNumber(dayNumber)}
+                isDark={isDark}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       </div>{/* max-w-7xl */}
