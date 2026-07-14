@@ -12,7 +12,7 @@ import {
   PoundSterling as Pound,
   Loader2,
 } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import Navbar from "../../components/Navbar/Navbar";
 import PageIntro from "../../components/PageIntro/PageIntro";
@@ -20,13 +20,14 @@ import PlanSection from "../PlanSection";
 import Footer from "../../components/Footer/Footer";
 import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
-import {
-  isDestinationAllowed,
-  ALLOWED_COUNTRIES,
-  BALKAN_DESTINATIONS,
-  findDestinationOption,
-} from "../../constants/allowedDestinations";
+import { findDestinationOption } from "../../constants/allowedDestinations";
 import DestinationCombobox from "../../components/DestinationCombobox/DestinationCombobox";
+import { useDetectLocation } from "../../hooks/useDetectLocation";
+import {
+  validateTripForm,
+  LOCATION_INPUT_REGEX,
+  type TripFormErrors,
+} from "../../validations/tripFormValidation";
 
 type TravelStyle = "road" | "bus" | "resort";
 type Currency = "USD" | "EUR" | "GBP";
@@ -34,15 +35,6 @@ type Currency = "USD" | "EUR" | "GBP";
 interface MainpageProps {
   onTripCreated?: (tripId: string) => void;
 }
-
-type Errors = {
-  starting_location?: string;
-  destination?: string;
-  starting_date?: string;
-  returning_date?: string;
-  budget_total?: string;
-  travelers?: string | number;
-};
 
 function toDateString(d: Date): string {
   return d.toISOString().split("T")[0];
@@ -54,35 +46,26 @@ function deriveDuration(start: string, end: string): number {
   );
 }
 
-function normCity(s: string): string {
-  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-}
-
-function editDistance(a: string, b: string): number {
-  const m = a.length, n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
-    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+// Destination pre-filled from the Destinations page click, resolved to a
+// dataset entry when possible. Read once per mount by both state initializers.
+function getStoredDestination(): { value: string; confirmed: boolean } {
+  const stored: string | null = JSON.parse(
+    localStorage.getItem("selectedDestination") || "null"
   );
-  for (let i = 1; i <= m; i++)
-    for (let j = 1; j <= n; j++)
-      dp[i][j] = a[i - 1] === b[j - 1]
-        ? dp[i - 1][j - 1]
-        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
-  return dp[m][n];
+  const option = findDestinationOption(stored ?? "");
+  return { value: option?.value ?? stored ?? "", confirmed: !!option };
 }
 
-function isSameCityFuzzy(inputCity: string, knownCity: string): boolean {
-  const a = normCity(inputCity);
-  const b = normCity(knownCity);
-  if (a === b) return true;
-  // ≤3 chars: exact only (avoids "Bar" vs "Bari"); 4-5 chars: 1 edit; 6+: 2 edits
-  const threshold = b.length <= 3 ? 0 : b.length <= 5 ? 1 : 2;
-  return editDistance(a, b) <= threshold;
-}
+const CurrencyIcon: React.FC<{ currency: Currency }> = ({ currency }) => {
+  if (currency === "USD") return <DollarSign size={18} className="text-emerald-500" />;
+  if (currency === "EUR") return <Euro size={18} className="text-emerald-500" />;
+  return <Pound size={18} className="text-emerald-500" />;
+};
 
 const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const isDark = theme === "dark";
 
   const TRAVEL_STYLES = useMemo(
     () => [
@@ -93,192 +76,79 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
     [t]
   );
 
-  const isDark = theme === "dark";
-
   const today = toDateString(new Date());
   const defaultReturn = toDateString(new Date(Date.now() + 7 * 86_400_000));
-  const busReturn = toDateString(new Date(Date.now() + 14 * 86_400_000)); 
-  const roadTripReturn =  toDateString(new Date(Date.now() + 31 * 86_400_000)); 
+
+  // ── Form state ──────────────────────────────────────────────────────────
   const [starting_date, setStartingDate] = useState<string>(today);
   const [returning_date, setReturningDate] = useState<string>(defaultReturn);
   const [starting_location, setStarting_location] = useState<string>("");
-
-  // Pre-fill destination from Destinations page click — resolve to dataset entry if possible
-  const [destination, setDestination] = useState<string>(() => {
-    const stored: string | null = JSON.parse(
-      localStorage.getItem("selectedDestination") || "null"
-    );
-    return findDestinationOption(stored ?? "")?.value ?? stored ?? "";
-  });
-  const [destinationConfirmed, setDestinationConfirmed] = useState<boolean>(() => {
-    const stored: string | null = JSON.parse(
-      localStorage.getItem("selectedDestination") || "null"
-    );
-    return stored ? !!findDestinationOption(stored) : false;
-  });
-
+  const [destination, setDestination] = useState<string>(() => getStoredDestination().value);
+  const [destinationConfirmed, setDestinationConfirmed] = useState<boolean>(() => getStoredDestination().confirmed);
   const [travelers, setTravelers] = useState<number>(2);
   const [travel_style, setStyle] = useState<TravelStyle>("road");
   const [budget_total, setBudget_total] = useState<number>(500);
   const [currency, setCurrency] = useState<Currency>("USD");
 
-  const [errors, setErrors] = useState<Errors>({});
+  // ── UI state ────────────────────────────────────────────────────────────
+  const [errors, setErrors] = useState<TripFormErrors>({});
   const [loading, setLoading] = useState(false);
   const [pendingTripId, setPendingTripId] = useState<string | null>(null);
-  const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('intro_shown'));
-  const [detecting, setDetecting] = useState(false);
+  const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem("intro_shown"));
   const [userId] = useState<string | null>(() => sessionStorage.getItem("user_id"));
+
+  const { detecting, detectError, detectLocation } = useDetectLocation(setStarting_location);
+
+  // Guests get a stable UUID identity (read later by the submit service)
+  useEffect(() => {
+    if (!localStorage.getItem("guest_id")) {
+      localStorage.setItem("guest_id", crypto.randomUUID());
+    }
+  }, []);
 
   const increaseTravelers = () => setTravelers((prev) => Math.min(prev + 1, 20));
   const decreaseTravelers = () => setTravelers((prev) => Math.max(1, prev - 1));
 
-  const [detectError, setDetectError] = useState<string | null>(null);
-
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-      setDetectError('Geolocation is not supported by your browser.');
-      return;
-    }
-
-    setDetecting(true);
-    setDetectError(null);
-
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json&accept-language=en`
-          );
-          if (!res.ok) throw new Error('Geocoding request failed');
-          const data = await res.json();
-          const addr = data.address ?? {};
-          const city =
-            addr.city ?? addr.town ?? addr.village ??
-            addr.municipality ?? addr.county ?? '';
-          const country = addr.country ?? '';
-          const label = [city, country].filter(Boolean).join(', ');
-          const result = label || (data.display_name?.split(',')[0]?.trim() ?? '');
-          if (!result) throw new Error('Location could not be resolved');
-          setStarting_location(result);
-          setDetectError(null);
-        } catch {
-          setDetectError('Could not resolve your location. Please type it manually.');
-        } finally {
-          setDetecting(false);
-        }
-      },
-      (err) => {
-        setDetecting(false);
-        if (err.code === err.PERMISSION_DENIED) {
-          setDetectError('Location access denied. Enable it in your browser settings and try again.');
-        } else if (err.code === err.POSITION_UNAVAILABLE) {
-          setDetectError('Your position is currently unavailable. Please type it manually.');
-        } else if (err.code === err.TIMEOUT) {
-          setDetectError('Location request timed out. Please try again.');
-        } else {
-          setDetectError('Could not detect your location. Please type it manually.');
-        }
-      },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 }
-    );
-  };
   const onHandleStartingLocation = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    if (inputValue === '' || /^[\p{L}\s,\-'.]+$/u.test(inputValue)) {
+    if (inputValue === "" || LOCATION_INPUT_REGEX.test(inputValue)) {
       setStarting_location(inputValue);
     }
   };
-  const guestId = localStorage.getItem("guest_id");
-  if (!guestId) {
-    const id = crypto.randomUUID();
-    localStorage.setItem("guest_id", id);
-  }
 
-  const CurrencyIcon = () => {
-    if (currency === "USD") return <DollarSign size={18} className="text-emerald-500" />;
-    if (currency === "EUR") return <Euro size={18} className="text-emerald-500" />;
-    return <Pound size={18} className="text-emerald-500" />;
-  };
-    
-  const validate = () => {
-    const newErrors: Errors = {};
-
-    // starting_location
-    const trimmedStart = starting_location.trim();
-    if (!trimmedStart) {
-      newErrors.starting_location = "Starting location is required";
-    } else if (trimmedStart.length < 2) {
-      newErrors.starting_location = "Please enter a valid location";
-    }
-
-    // destination required + confirmed + allowed
-    if (!destination.trim()) {
-      newErrors.destination = "Destination is required";
-    } else if (!destinationConfirmed) {
-      newErrors.destination = "Please select a destination from the list";
-    } else if (!isDestinationAllowed(destination)) {
-      newErrors.destination = `Only destinations in ${ALLOWED_COUNTRIES.join(", ")} are supported`;
-    }
-
-    // same location / same country (only when both fields are valid)
-    if (!newErrors.starting_location && !newErrors.destination) {
-      const startNorm = trimmedStart.toLowerCase();
-      const destNorm = destination.trim().toLowerCase();
-
-      const startCity = trimmedStart.split(',')[0].trim();
-      const destCity = destination.split(',')[0].trim();
-      // Find the canonical allowlist city that the destination resolves to
-      const canonicalCity = BALKAN_DESTINATIONS
-        .flatMap(d => [...d.cities])
-        .find(c => isSameCityFuzzy(c, destCity));
-
-      if (startNorm === destNorm) {
-        newErrors.destination = "Starting location and destination cannot be the same.";
-      } else if (canonicalCity && isSameCityFuzzy(startCity, canonicalCity)) {
-        newErrors.destination = "Your starting location appears to be the same city as your destination.";
-      } else {
-        const sameCountry = ALLOWED_COUNTRIES.some(
-          country => startNorm.includes(country.toLowerCase()) && destNorm.includes(country.toLowerCase())
-        );
-        if (sameCountry) {
-          newErrors.destination = "Your destination must be in a different country than your starting location.";
-        }
-      }
-    }
-
-    // dates
-    if (!starting_date) {
-      newErrors.starting_date = "Departure date is required";
-    } else if (starting_date < today) {
-      newErrors.starting_date = "Departure date cannot be in the past";
-    }
-
-    if (!returning_date) {
-      newErrors.returning_date = "Return date is required";
-    } else if (returning_date <= starting_date) {
-      newErrors.returning_date = "Return date must be after departure date";
-    } else if (travel_style === 'bus' && (returning_date < defaultReturn || returning_date > busReturn)) {
-      newErrors.returning_date = "Bus travel requires a trip length between 7 and 14 days.";
-    } else if ((travel_style === 'road' || travel_style === 'resort') && returning_date > roadTripReturn) {
-      newErrors.returning_date = "This travel style supports a maximum of 31 days.";
-    }
-
-    // budget
-    if (!budget_total || budget_total < 500) {
-      newErrors.budget_total = "Budget should be at least $500";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const resetForm = () => {
+    setStartingDate(today);
+    setReturningDate(defaultReturn);
+    setTravelers(2);
+    setStyle("road");
+    setBudget_total(500);
+    setCurrency("USD");
+    setErrors({});
+    localStorage.removeItem("selectedDestination");
   };
 
   const onSubmitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    // Validation may geocode the starting location (async) — show the loading
+    // state so double-submits are blocked while it runs.
+    setLoading(true);
+    const newErrors = await validateTripForm({
+      starting_location,
+      destination,
+      destinationConfirmed,
+      starting_date,
+      returning_date,
+      travel_style,
+      budget_total,
+    });
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setLoading(false);
+      return;
+    }
 
     try {
-      setLoading(true);
-
       const formData = {
         title: `${starting_location} → ${destination}`,
         starting_location,
@@ -290,20 +160,13 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
         budget_total,
         currency,
       };
-      
+
       const { submitServiceWithItineraryFast } =
         await import("../../hooks/submitService");
       const result = await submitServiceWithItineraryFast(formData);
-      sessionStorage.setItem('iterinary', JSON.stringify(formData));
+      sessionStorage.setItem("iterinary", JSON.stringify(formData));
       if (result?.trip?.id) {
-        setStartingDate(today);
-        setReturningDate(defaultReturn);
-        setTravelers(2);
-        setStyle("road");
-        setBudget_total(500);
-        setCurrency("USD");
-        setErrors({});
-        localStorage.removeItem("selectedDestination");
+        resetForm();
         setPendingTripId(result.trip.id);
         onTripCreated?.(result.trip.id);
       }
@@ -386,9 +249,8 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     />
                     <button
                       type="button"
-                      onClick={handleDetectLocation}
+                      onClick={detectLocation}
                       disabled={detecting}
-                      
                       className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-sky-100 text-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                     >
                       {detecting ? (
@@ -433,10 +295,10 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     value={destination}
                     confirmed={destinationConfirmed}
                     onChange={(val, isConfirmed) => {
-                      if (val === '' || /^[\p{L}\s,\-'.]+$/u.test(val)) {
+                      if (val === "" || LOCATION_INPUT_REGEX.test(val)) {
                         setDestination(val);
-                  }
-                     setDestinationConfirmed(isConfirmed);
+                      }
+                      setDestinationConfirmed(isConfirmed);
                       if (isConfirmed) setErrors((prev) => ({ ...prev, destination: undefined }));
                     }}
                     isDark={isDark}
@@ -586,7 +448,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                    <CurrencyIcon />
+                    <CurrencyIcon currency={currency} />
                   </div>
                   <input
                     type="number"
