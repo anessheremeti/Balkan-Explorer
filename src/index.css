@@ -8,10 +8,9 @@
 /* ── Design tokens ─────────────────────────────────────────────────────── */
 
 @theme {
-  /* Body face — quiet, humanist, warm */
-  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  /* Display face — characterful serif for headings */
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  /* Single clean family — professional product look; headings differ by weight */
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
 
   /* Brand: one accent family (sky), used everywhere an accent is needed */
   --color-brand-50: #f0f9ff;
@@ -27,7 +26,8 @@
 @layer base {
   h1, h2, h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    letter-spacing: -0.025em;
   }
 
   /* Visible, on-brand keyboard focus everywhere */
