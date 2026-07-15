@@ -1,16 +1,13 @@
 import {
-  MapPin,
   Car,
   Bus,
   Building2,
   Minus,
   Plus,
   Wand2,
-  Target,
   DollarSign,
   Euro,
   PoundSterling as Pound,
-  Loader2,
 } from "lucide-react";
 import React, { useState, useEffect, useMemo } from "react";
 
@@ -22,6 +19,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 import { findDestinationOption } from "../../constants/allowedDestinations";
 import DestinationCombobox from "../../components/DestinationCombobox/DestinationCombobox";
+import StartingLocationInput from "../../components/StartingLocationInput/StartingLocationInput";
 import { useDetectLocation } from "../../hooks/useDetectLocation";
 import {
   validateTripForm,
@@ -57,9 +55,9 @@ function getStoredDestination(): { value: string; confirmed: boolean } {
 }
 
 const CurrencyIcon: React.FC<{ currency: Currency }> = ({ currency }) => {
-  if (currency === "USD") return <DollarSign size={18} className="text-emerald-500" />;
-  if (currency === "EUR") return <Euro size={18} className="text-emerald-500" />;
-  return <Pound size={18} className="text-emerald-500" />;
+  if (currency === "USD") return <DollarSign size={18} className="text-sky-500" />;
+  if (currency === "EUR") return <Euro size={18} className="text-sky-500" />;
+  return <Pound size={18} className="text-sky-500" />;
 };
 
 const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
@@ -109,10 +107,9 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const increaseTravelers = () => setTravelers((prev) => Math.min(prev + 1, 20));
   const decreaseTravelers = () => setTravelers((prev) => Math.max(1, prev - 1));
 
-  const onHandleStartingLocation = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    if (inputValue === "" || LOCATION_INPUT_REGEX.test(inputValue)) {
-      setStarting_location(inputValue);
+  const onHandleStartingLocation = (value: string) => {
+    if (value === "" || LOCATION_INPUT_REGEX.test(value)) {
+      setStarting_location(value);
     }
   };
 
@@ -197,12 +194,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
         <section className="px-4 sm:px-6 lg:px-12 pt-8 lg:pt-16 pb-6 sm:pb-12">
           <div className="max-w-7xl mx-auto flex flex-col items-center text-center gap-4 sm:gap-6">
             <h1
-              className={`font-bold leading-tight tracking-tight text-2xl sm:text-5xl md:text-6xl lg:text-7xl ${
+              className={`font-bold leading-tight tracking-tight text-3xl sm:text-5xl md:text-6xl lg:text-7xl ${
                 isDark ? "text-slate-50" : "text-gray-900"
               }`}
             >
               {t("discover the hidden Balkans")}
-              <span className="block text-indigo-600">Hidden Balkans</span>
             </h1>
 
             <p className={`text-base sm:text-xl max-w-2xl ${isDark ? "text-slate-400" : "text-gray-600"}`}>
@@ -214,7 +210,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
         {/* FORM */}
         <section className="px-4 sm:px-6 lg:px-12 pb-16">
           <div className="max-w-5xl mx-auto">
-            <div className="h-1.5 w-full bg-linear-to-r from-cyan-400 via-blue-500 to-fuchsia-500 rounded-t-2xl" />
+            <div className="h-1.5 w-full bg-linear-to-r from-sky-400 via-sky-500 to-blue-600 rounded-t-2xl" />
 
             <form
               onSubmit={onSubmitHandler}
@@ -230,37 +226,15 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     {t("starting_from")}
                   </label>
 
-                  <div className="relative">
-                    <MapPin
-                      size={18}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-500 pointer-events-none"
-                    />
-                    <input
-                      type="text"
-                      onChange={onHandleStartingLocation}
-                      value={starting_location}
-                      placeholder={t("where")}
-                      maxLength={40}
-                      className={`w-full pl-10 pr-24 py-3 rounded-xl border ${
-                        isDark
-                          ? "bg-slate-800 text-slate-300 border-slate-700 placeholder:text-slate-500"
-                          : "bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400"
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={detectLocation}
-                      disabled={detecting}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-sky-100 text-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-                    >
-                      {detecting ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Target size={14} />
-                      )}
-                      {detecting ? 'Detecting…' : 'Detect'}
-                    </button>
-                  </div>
+                  <StartingLocationInput
+                    value={starting_location}
+                    onChange={onHandleStartingLocation}
+                    onDetect={detectLocation}
+                    detecting={detecting}
+                    isDark={isDark}
+                    placeholder={t("where")}
+                    maxLength={40}
+                  />
 
                   {errors.starting_location && (
                     <p className={`text-xs ${isDark ? "text-red-400" : "text-red-500"}`}>
@@ -397,13 +371,13 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                       isDark ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"
                     }`}
                   >
-                    <button type="button" onClick={decreaseTravelers} className="p-2">
+                    <button type="button" onClick={decreaseTravelers} aria-label="Decrease travelers" className="p-2">
                       <Minus size={16} />
                     </button>
                     <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
                       {travelers}
                     </span>
-                    <button type="button" onClick={increaseTravelers} className="p-2">
+                    <button type="button" onClick={increaseTravelers} aria-label="Increase travelers" className="p-2">
                       <Plus size={16} />
                     </button>
                   </div>
@@ -426,7 +400,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                         onClick={() => setStyle(id as TravelStyle)}
                         className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 rounded-xl border transition-all duration-200 hover:cursor-pointer ${
                           active
-                            ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                            ? "bg-sky-500 text-white border-sky-500 shadow-md"
                             : isDark
                             ? "bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800"
                             : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
@@ -464,7 +438,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as Currency)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded"
                   >
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
@@ -483,7 +457,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                 disabled={loading}
                 className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3.5 sm:py-4 rounded-xl hover:cursor-pointer font-semibold text-sm sm:text-base hover:bg-slate-800 active:scale-[0.98] transition disabled:opacity-50"
               >
-                {loading ? "Creating..." : t("discover the hidden Balkans")}
+                {loading ? "Creating..." : t("build_itinerary", "Build my itinerary")}
                 <Wand2 className="text-sky-400" size={18} />
               </button>
             </form>

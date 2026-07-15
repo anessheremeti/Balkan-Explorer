@@ -349,7 +349,7 @@ const BottomMeta: React.FC<{ item: ItineraryItem }> = ({ item }) => {
       <div className="flex items-center gap-3 text-xs mt-2">
         <span className="flex items-center gap-1">
           <Star size={12} className="text-amber-400 fill-amber-400" />
-          <span className="text-slate-700 font-medium">
+          <span className="text-slate-700 dark:text-slate-300 font-medium">
             {rating}
             {reviewCount ? ` (${reviewCount} reviews)` : ""}
           </span>
@@ -412,7 +412,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
   });
   const imageUrl = staticUrl ?? fetchedUrl;
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden flex shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl overflow-hidden flex shadow-sm hover:shadow-md transition-shadow duration-200">
       {/* Thumbnail */}
       <div className="relative w-24 sm:w-36 md:w-40 shrink-0 min-h-27">
         {photoLoading ? (
@@ -445,7 +445,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
         <div>
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h4 className="font-semibold text-slate-900 text-[14px] leading-snug">
+              <h4 className="font-semibold text-slate-900 dark:text-slate-200 text-[14px] leading-snug">
                 {item.title}
               </h4>
               {nameLocal && (
@@ -458,7 +458,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
               {config.label}
             </span>
           </div>
-          <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed line-clamp-2">
+          <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed line-clamp-2">
             {item.description}
           </p>
         </div>

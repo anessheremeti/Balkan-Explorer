@@ -1,4 +1,101 @@
 @import "tailwindcss";
+@plugin "daisyui";
+
+/* ThemeContext toggles a `.dark` class on <html>; make dark: variants follow
+   it (Tailwind v4 defaults to prefers-color-scheme otherwise). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Design tokens ─────────────────────────────────────────────────────── */
+
+@theme {
+  /* Body face — quiet, humanist, warm */
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Display face — characterful serif for headings */
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+
+  /* Brand: one accent family (sky), used everywhere an accent is needed */
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-400: #38bdf8;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0284c7;
+  --color-brand-700: #0369a1;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+
+@layer base {
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* Visible, on-brand keyboard focus everywhere */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* ── Shared component classes (used across forms & settings pages) ─────── */
+
+.label {
+  @apply text-xs font-bold tracking-widest text-slate-400 uppercase;
+}
+
+.input-wrapper {
+  @apply relative;
+}
+
+.input {
+  @apply w-full pl-11 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-sky-500/20;
+}
+
+.input-icon {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 text-slate-400;
+}
+
+.input-chevron {
+  @apply absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none;
+}
+
+.input-action {
+  @apply absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-sky-500 flex items-center gap-1;
+}
+
+.icon-btn {
+  @apply p-2 bg-white border rounded-lg hover:bg-slate-100 active:scale-95;
+}
+
+.style-card {
+  @apply flex flex-col items-center gap-2 p-4 border rounded-xl text-slate-500 hover:border-slate-300 transition;
+}
+
+.style-card-active {
+  @apply border-sky-500 bg-sky-50 text-sky-600;
+}
+
+@media (max-width: 450px) {
+  .res {
+    width: min(162%, 30rem);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.25s ease-out;
+}
 
 /* ── Google Places Autocomplete dropdown ───────────────────────────────── */
 
@@ -60,7 +157,7 @@
   display: block;
   width: 18px;
   height: 18px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230ea5e9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-size: contain;
 }
@@ -74,7 +171,7 @@
 
 /* Matched query highlight */
 .pac-matched {
-  color: #7c3aed;
+  color: #0284c7;
   font-weight: 700;
 }
 
@@ -84,4 +181,3 @@
   color: #94a3b8;
   font-weight: 400;
 }
-

@@ -3,7 +3,7 @@
     "create a personalized itenary":"Tell us where you're starting from — we'll craft your perfect Balkan adventure in seconds",
     "starting_from": "Starting from",
     "destination":"Destination",
-    "where":"where do you want to go?",
+    "where":"Your Location...",
     "dates": "Travel Dates",
     "days": "Days",
     "departure": "Departure",
@@ -14,6 +14,7 @@
     "budget_bus":"Budget Bus",
     "resort_stay":"Resort Stay",
     "your budget":"Your Budget",
+    "build_itinerary": "Build my itinerary",
 
     "back_to_dashboard": "Back to Dashboard",
     "settings_title": "App Settings",

@@ -6,12 +6,11 @@ import { useEffect, useState } from "react";
 import tripService from "../../hooks/tripService";
 import { type Trip } from "../../hooks/itineraryService";
 import { supabase } from "../../../createClient";
+import { useTheme } from "../../context/ThemeContext";
 import {useTranslation} from "react-i18next";
 import { API_BASE } from "../../constants/api";
 import { useDownloadPDF } from "../../hooks/useDownloadPDF";
 import PDFAuthModal from "../../components/DownloadPDF/PDFAuthModal";
-
-type Theme = "light" | "dark";
 
 interface PlanSectionProps {
   userId: string | null;
@@ -22,7 +21,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
   const POLL_MAX_ATTEMPTS = 75; // 150 s — covers 55 s AI timeout + fallback save
   const {t} = useTranslation('itinerary');
   const { showAuthModal, closeAuthModal } = useDownloadPDF();
-  const [theme, setTheme] = useState<Theme>("light");
+  const { theme } = useTheme();
   const [trips, setTrips] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -53,22 +52,6 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
       }, [trips]);
     
 
-  // Theme
-  useEffect(() => {
-    const loadTheme = () => {
-      try {
-        const stored = localStorage.getItem("app_settings");
-        if (!stored) return;
-        const parsed = JSON.parse(stored);
-        setTheme(parsed?.theme === "dark" ? "dark" : "light");
-      } catch (err) {
-        console.error("Theme error:", err);
-      }
-    };
-    loadTheme();
-    window.addEventListener("storage", loadTheme);
-    return () => window.removeEventListener("storage", loadTheme);
-  }, []);
   const isDark = theme === "dark";
 
   // ── Poll until AI itinerary is ready, then load it ───────────────────────
@@ -208,7 +191,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
 if (generating) {
     const progress = Math.min(Math.round((pollAttempt / POLL_MAX_ATTEMPTS) * 100), 99);
     return (
-      <div className={`w-full min-h-screen px-4 sm:px-8 lg:px-24 py-6 sm:py-10 ${isDark ? "bg-gray-900" : "bg-white"}`}>
+      <div className={`w-full min-h-screen px-4 sm:px-8 lg:px-24 py-6 sm:py-10 ${isDark ? "bg-slate-950" : "bg-white"}`}>
         <div className="max-w-7xl mx-auto">
           <div className="border border-sky-100 bg-sky-50 rounded-2xl p-8 text-center space-y-4">
             <div className="relative w-16 h-16 mx-auto">
@@ -240,7 +223,7 @@ if (generating) {
   // ── Loading state (initial fetch) ────────────────────────────────────────
   if (loading) {
     return (
-      <div className={`w-full min-h-screen px-4 sm:px-8 lg:px-24 py-6 sm:py-10 ${isDark ? "bg-gray-900" : "bg-white"}`}>
+      <div className={`w-full min-h-screen px-4 sm:px-8 lg:px-24 py-6 sm:py-10 ${isDark ? "bg-slate-950" : "bg-white"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-center py-12">
           <div className="text-center space-y-3">
             <Loader className="w-8 h-8 animate-spin mx-auto text-sky-500" />
@@ -254,7 +237,7 @@ if (generating) {
   return (
     <div className={`w-full min-h-screen px-4 sm:px-8 lg:px-24 py-6 sm:py-10 ${
       isDark
-        ? "bg-gray-900 border-t border-slate-600"
+        ? "bg-slate-950 border-t border-slate-600"
         : "bg-white border-t border-slate-100"
     } text-slate-900 dark:bg-slate-900 dark:text-slate-50`}>
       <div className="max-w-7xl mx-auto">

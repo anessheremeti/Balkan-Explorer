@@ -3,7 +3,7 @@
     "create a personalized itenary": "Sagen Sie uns, wo Sie starten — wir gestalten Ihr perfektes Balkan-Abenteuer in Sekunden",
     "starting_from": "Ab",
     "destination": "Zielort",
-    "where": "Wohin soll es gehen?",
+    "where": "Ihr Standort",
     "dates": "Reisedaten",
     "days": "Tage",
     "departure": "Abfahrt",
@@ -14,6 +14,7 @@
     "budget_bus": "Budget-Bus",
     "resort_stay": "Resort-Aufenthalt",
     "your budget": "Ihr Budget",
+    "build_itinerary": "Meine Route erstellen",
 
     "back_to_dashboard": "Zurück zum Dashboard",
     "settings_title": "App-Einstellungen",

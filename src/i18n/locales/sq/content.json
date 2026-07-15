@@ -3,7 +3,7 @@
     "create a personalized itenary": "Tregona nga nisesh — ne e krijojmë aventurën tënde të përsosur ballkanike brenda sekondave",
     "starting_from": "Nisja nga",
     "destination": "Destinacioni",
-    "where": "Ku dëshironi të shkoni?",
+    "where": "Lokacioni juaj...",
     "dates": "Datat e Udhëtimit",
     "days": "Ditë",
     "departure": "Nisja",
@@ -14,6 +14,7 @@
     "budget_bus": "Autobus (Ekonomik)",
     "resort_stay": "Qëndrim në Resort",
     "your budget": "Buxheti juaj",
+    "build_itinerary": "Ndërto itinerarin tim",
 
     "back_to_dashboard": "Kthehu te Paneli",
     "settings_title": "Cilësimet e Aplikacionit",

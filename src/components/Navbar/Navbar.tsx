@@ -19,11 +19,8 @@ const Navbar: React.FC = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const storedPrefsString = localStorage.getItem('app_settings');
-const storedPreferences = storedPrefsString ? JSON.parse(storedPrefsString) : {};
-const userTheme = storedPreferences.theme;
-const theme = useTheme();
-const isDark = theme.theme === 'dark';
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   useEffect(() => {
   if (!userId) return;
 
@@ -51,26 +48,26 @@ const isDark = theme.theme === 'dark';
     setShowDropdown(prev => !prev);
   }
   return (
-    <nav className={`sticky top-0 z-50 w-full ${userTheme === 'dark' ? 'bg-gray-900 border-b  border-slate-600' : 'bg-white border-b border-slate-100'} shadow-sm`}>
+    <nav className={`sticky top-0 z-50 w-full ${isDark ? 'bg-slate-950 border-b  border-slate-600' : 'bg-white border-b border-slate-100'} shadow-sm`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
         <div className="flex items-center justify-between h-18">
           
-          <div className={`flex items-center shrink-0 cursor-pointer group ${userTheme === 'dark' ? 'text-white' : 'text-[#1e293b]'}`}>
+          <div className={`flex items-center shrink-0 cursor-pointer group ${isDark ? 'text-white' : 'text-[#1e293b]'}`}>
             <Link to="/" className='flex'>
             <div className="bg-[#0ea5e9] p-1.5 rounded-[10px] mr-3 transition-transform duration-200 group-hover:scale-105">
               <Send size={20} className="text-white fill-white rotate-[-15deg] translate-x-[-1px] translate-y-[1px]" />
             </div>
-            <span className={`text-[20px] font-bold tracking-tight ${userTheme === 'dark' ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`}>
+            <span className={`text-[20px] font-bold tracking-tight ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`}>
               BalkanExplorer
             </span>
             </Link>
           </div>
 
-          <div className={`hidden md:flex items-center justify-center flex-1 space-x-8 px-8 ${userTheme === 'dark' ? 'text-white' : 'text-[#1e293b]'}`}>
-            <Link to='/destinations'><NavLink href='/destinations' className={`hover:text-[#0ea5e9] ${userTheme === 'dark' ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`}>{t('destinations')}</NavLink></Link>
-            <Link to="/how-it-works"><NavLink className={`hover:text-[#0ea5e9] ${userTheme === 'dark' ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`} href="/how-it-works">{t('how it works')}</NavLink></Link>
+          <div className={`hidden md:flex items-center justify-center flex-1 space-x-8 px-8 ${isDark ? 'text-white' : 'text-[#1e293b]'}`}>
+            <Link to='/destinations'><NavLink href='/destinations' className={`hover:text-[#0ea5e9] ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`}>{t('destinations')}</NavLink></Link>
+            <Link to="/how-it-works"><NavLink className={`hover:text-[#0ea5e9] ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`} href="/how-it-works">{t('how it works')}</NavLink></Link>
             <Link to="/community">
-              <NavLink className={`hover:text-[#0ea5e9] ${userTheme === 'dark' ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`} href="/community">
+              <NavLink className={`hover:text-[#0ea5e9] ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`} href="/community">
                 {t('community')}
               </NavLink>
             </Link>
@@ -84,7 +81,7 @@ const isDark = theme.theme === 'dark';
           {access_token ? (
             <div className="flex items-center gap-2">
               {userName && (
-                <span className={`text-sm font-medium ${userTheme === 'dark' ? 'text-white' : 'text-slate-700'}`}>
+                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-700'}`}>
                   {userName}
                 </span>
               )}
@@ -149,7 +146,7 @@ const isDark = theme.theme === 'dark';
       </div>
 
       {isMenuOpen && (
-        <div className={`md:hidden border-b animate-in slide-in-from-top duration-300 ${userTheme === 'dark' ? 'bg-gray-900 border-slate-700' : 'bg-white border-slate-100'}`}>
+        <div className={`md:hidden border-b animate-in slide-in-from-top duration-300 ${isDark ? 'bg-slate-950 border-slate-700' : 'bg-white border-slate-100'}`}>
           <div className="px-4 pt-2 pb-6 space-y-1">
             <Link to='/destinations' onClick={() => setIsMenuOpen(false)}>
               <MobileNavLink href="/destinations">{t('destinations')}</MobileNavLink>
@@ -162,7 +159,7 @@ const isDark = theme.theme === 'dark';
             </Link>
 
             {access_token ? (
-              <div className={`pt-4 mt-3 border-t ${userTheme === 'dark' ? 'border-slate-700' : 'border-slate-100'}`}>
+              <div className={`pt-4 mt-3 border-t ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
                 {/* User identity */}
                 
 
@@ -172,14 +169,14 @@ const isDark = theme.theme === 'dark';
                   { to: '/help-center',  Icon: HelpCircle, label: 'Help Center'  },
                 ].map(({ to, Icon, label }) => (
                   <Link key={to} to={to} onClick={() => setIsMenuOpen(false)}>
-                    <button className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${userTheme === 'dark' ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'}`}>
+                    <button className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'}`}>
                       <Icon size={17} className="text-slate-400 shrink-0" />
                       {label}
                     </button>
                   </Link>
                 ))}
 
-                <div className={`mt-2 pt-2 border-t ${userTheme === 'dark' ? 'border-slate-700' : 'border-slate-100'}`}>
+                <div className={`mt-2 pt-2 border-t ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
                   <button
                     onClick={() => { setIsMenuOpen(false); setShowLogoutModal(true); }}
                     className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
