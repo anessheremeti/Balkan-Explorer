@@ -64,6 +64,9 @@ const Login: React.FC = () => {
       posthog?.identify(user.id, { email: formData.email });
 
       navigate("/");
+      if(formData.email === 'anessheremeti9@gmail.com'){
+        navigate('/admin')
+      }
       setFormData({
         email: "",
         password: "",

@@ -85,7 +85,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const [destinationConfirmed, setDestinationConfirmed] = useState<boolean>(() => getStoredDestination().confirmed);
   const [travelers, setTravelers] = useState<number>(2);
   const [travel_style, setStyle] = useState<TravelStyle>("road");
-  const [budget_total, setBudget_total] = useState<number>(500);
+  // Budget may be pre-filled by a deal's "Plan this trip" (min 500 enforced)
+  const [budget_total, setBudget_total] = useState<number>(() => {
+    const stored = Number(localStorage.getItem("selectedBudget"));
+    return Number.isFinite(stored) && stored >= 500 ? stored : 500;
+  });
   const [currency, setCurrency] = useState<Currency>("USD");
 
   // ── UI state ────────────────────────────────────────────────────────────
@@ -102,6 +106,8 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
     if (!localStorage.getItem("guest_id")) {
       localStorage.setItem("guest_id", crypto.randomUUID());
     }
+    // Deal prefill is one-shot — consume it so it doesn't stick around
+    localStorage.removeItem("selectedBudget");
   }, []);
 
   const increaseTravelers = () => setTravelers((prev) => Math.min(prev + 1, 20));

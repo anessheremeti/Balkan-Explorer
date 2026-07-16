@@ -46,6 +46,17 @@ export const guestMigrateLimiter = rateLimit({
   handler: json429('Too many migration requests — try again shortly.'),
 });
 
+// POST /api/deals/:id/inquire
+// Public lead-capture form — 5/hour per IP stops spam while letting a real
+// visitor inquire about several deals.
+export const inquiryLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: json429('Too many inquiries — try again in an hour.'),
+});
+
 // GET /api/geocode
 // Replaces the hand-rolled rateOk() map. 30/min per IP with 24 h cache
 // means a real user will almost never hit this after the first load.

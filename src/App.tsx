@@ -18,6 +18,7 @@ import ResetPassword from './pages/ResetPassword/ResetPassword';
 import MyTravels from './pages/MyTravels/MyTravels';
 import PageTracker from './components/Analytics/PageTracker';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import AdminDashboard from './pages/Admin';
 
 function App() {
   return (
@@ -46,6 +47,8 @@ function App() {
         <Route path='/app-settings' element={<AppSettings />} />
         <Route path="account-settings" element={<AccountSettings />} />
         <Route path="/my-travels" element={<MyTravels />} />
+        {/* Server re-checks admin rights on every /api/admin call */}
+        <Route path="/admin" element={<AdminDashboard />} />
       </Route>
     </Routes>
     </>

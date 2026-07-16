@@ -4,6 +4,7 @@ import { Search, MapPin, Star, Filter, ArrowRight, Info, ChevronDown, TrendingUp
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
+import DealsShowcase from '../../components/DealsShowcase/DealsShowcase';
 import kotor from '../../assets/Gemini_Generated_Image_2kjty02kjty02kjt.png'
 import sarande from '../../assets/Gemini_Generated_Image_1m3iwg1m3iwg1m3i.png'
 import ohrid from '../../assets/Gemini_Generated_Image_i2h63xi2h63xi2h6.png'
@@ -240,6 +241,9 @@ const DestinationsPage: React.FC = () => {
             {t('dest_showing')} <span className="text-slate-900">{filteredDestinations.length}</span> {t('dest_destinations')}
           </p>
         </div>
+
+        {/* Hot Deals — agency offers managed in the admin dashboard */}
+        <DealsShowcase isDark={isDark} country={selectedRegion} />
 
         {/* Destinations Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -1,4 +1,3 @@
-import { supabase } from "../../createClient";
 import i18n from "../i18n/index.js";
 
 export interface Highlight {
@@ -319,23 +318,8 @@ const destinationService = async () => {
       return cached;
     }
 
-    try {
-      const { data, error } = await supabase
-        .from("destinations")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (!error && data) {
-        const destination = data as Destination;
-        destinationCache.set(cacheKey, destination);
-        cacheTimestamps.set(cacheKey, Date.now());
-        return destination;
-      }
-    } catch {
-      // fall through to mock data
-    }
-
+    // Destination content is curated in-code (with i18n keys) — there is no
+    // "destinations" table in Supabase, so no remote lookup is attempted.
     const mock = mockDestinations[id];
     if (!mock) return null;
     const translated = translateDestination(mock);
@@ -354,20 +338,6 @@ const destinationService = async () => {
       return Object.keys(mockDestinations).map(
         (id) => destinationCache.get(`${id}_${lang}`)!
       );
-    }
-
-    try {
-      const { data, error } = await supabase.from("destinations").select("*");
-      if (!error && data?.length) {
-        const destinations = data as Destination[];
-        destinations.forEach((dest) => {
-          destinationCache.set(`${dest.id}_${lang}`, dest);
-          cacheTimestamps.set(`${dest.id}_${lang}`, Date.now());
-        });
-        return destinations;
-      }
-    } catch {
-      // fall through to mock data
     }
 
     const translated = Object.values(mockDestinations).map(translateDestination);
