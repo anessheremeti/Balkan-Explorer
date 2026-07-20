@@ -2,6 +2,25 @@
   command = "npm run build"
   publish = "dist"
 
+# ── PostHog reverse proxy ──────────────────────────────────────────────────
+# Many ad blockers / privacy browsers (Brave, Firefox strict mode, uBlock)
+# block requests to posthog.com domains outright, silently dropping every
+# event from those visitors. Routing through our own domain first makes the
+# request look same-origin, which blocklists don't flag.
+# Must come BEFORE the SPA catch-all below — Netlify applies the first
+# matching rule, and "/*" would otherwise swallow these paths.
+[[redirects]]
+  from = "/ingest/static/*"
+  to = "https://eu-assets.i.posthog.com/static/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ingest/*"
+  to = "https://eu.i.posthog.com/:splat"
+  status = 200
+  force = true
+
 # Redirect all routes to index.html so React Router handles them client-side.
 # Without this, direct links to /my-travels, /plan etc. return 404 on Netlify.
 [[redirects]]
