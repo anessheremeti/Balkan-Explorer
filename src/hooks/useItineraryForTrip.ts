@@ -20,6 +20,8 @@ export interface ItineraryDayView {
   day_number: number;
   title: string;
   date: string | null;
+  // Set only for country-wide trips ("Albania" — all cities); null otherwise.
+  city: string | null;
   items: ItineraryItemView[];
 }
 
@@ -38,6 +40,7 @@ interface RawDay {
   day_number: number;
   title: string | null;
   date: string | null;
+  city: string | null;
   itinerary_items: RawItem[];
 }
 
@@ -58,7 +61,7 @@ export function useItineraryForTrip() {
     const { data, error: err } = await supabase
       .from('itinerary_days')
       .select(
-        'id, day_number, title, date, itinerary_items(id, title, description, item_type, start_time, metadata)'
+        'id, day_number, title, date, city, itinerary_items(id, title, description, item_type, start_time, metadata)'
       )
       .eq('trip_id', tripId)
       .order('day_number', { ascending: true });
@@ -76,6 +79,7 @@ export function useItineraryForTrip() {
       day_number: d.day_number,
       title: d.title ?? `Day ${d.day_number}`,
       date: d.date,
+      city: d.city ?? null,
       items: (d.itinerary_items ?? [])
         .slice()
         .sort((a, b) => (a.start_time ?? '').localeCompare(b.start_time ?? ''))

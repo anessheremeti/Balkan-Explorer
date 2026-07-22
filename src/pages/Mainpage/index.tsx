@@ -21,6 +21,7 @@ import { findDestinationOption } from "../../constants/allowedDestinations";
 import DestinationCombobox from "../../components/DestinationCombobox/DestinationCombobox";
 import StartingLocationInput from "../../components/StartingLocationInput/StartingLocationInput";
 import { useDetectLocation } from "../../hooks/useDetectLocation";
+import { getPendingTripId, setPendingTripId as persistPendingTripId } from "../../hooks/usePendingTrip";
 import {
   validateTripForm,
   LOCATION_INPUT_REGEX,
@@ -86,7 +87,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const [travelers, setTravelers] = useState<number>(2);
   const [travel_style, setStyle] = useState<TravelStyle>("road");
   // Budget may be pre-filled by a deal's "Plan this trip" (min 500 enforced)
-  const [budget_total, setBudget_total] = useState<number>(() => {
+  const [budget_total, setBudget_total] = useState<string>(() => {
     const stored = Number(localStorage.getItem("selectedBudget"));
     return Number.isFinite(stored) && stored >= 500 ? stored : 500;
   });
@@ -95,7 +96,10 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   // ── UI state ────────────────────────────────────────────────────────────
   const [errors, setErrors] = useState<TripFormErrors>({});
   const [loading, setLoading] = useState(false);
-  const [pendingTripId, setPendingTripId] = useState<string | null>(null);
+  // Restored from sessionStorage on mount so a reload mid-generation resumes
+  // the progress screen instead of falling back to "no trip found" (the
+  // background itinerary write may not have landed in Supabase yet).
+  const [pendingTripId, setPendingTripId] = useState<string | null>(() => getPendingTripId());
   const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem("intro_shown"));
   const [userId] = useState<string | null>(() => sessionStorage.getItem("user_id"));
 
@@ -124,7 +128,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
     setReturningDate(defaultReturn);
     setTravelers(2);
     setStyle("road");
-    setBudget_total(500);
+    setBudget_total('500');
     setCurrency("USD");
     setErrors({});
     localStorage.removeItem("selectedDestination");
@@ -170,6 +174,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
       sessionStorage.setItem("iterinary", JSON.stringify(formData));
       if (result?.trip?.id) {
         resetForm();
+        persistPendingTripId(result.trip.id);
         setPendingTripId(result.trip.id);
         onTripCreated?.(result.trip.id);
       }
@@ -431,9 +436,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     <CurrencyIcon currency={currency} />
                   </div>
                   <input
-                    type="number"
+                    type="text"
                     value={budget_total}
-                    onChange={(e) => setBudget_total(Number(e.target.value))}
+                    
+                       pattern="[0-9]*"
+                    onChange={(e) => setBudget_total(e.target.value)}
                     placeholder="e.g. 1500"
                     className={`w-full pl-10 pr-20 py-3 rounded-xl border font-semibold ${
                       isDark

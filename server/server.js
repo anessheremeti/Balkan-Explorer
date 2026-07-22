@@ -14,7 +14,7 @@ import { log }                                    from './lib/logger.js';
 import { tripCreateLimiter, photoSearchLimiter, statusPollLimiter, guestMigrateLimiter, geocodeLimiter, inquiryLimiter } from './lib/rate-limits.js';
 import { tripCache, photoCache, proxyGeoCache }   from './lib/cache.js';
 import { getVerifiedPlaces, getHealthReport }     from './lib/place-orchestrator.js';
-import { assembleItinerary }                      from './lib/itinerary-assembler.js';
+import { assembleItinerary, assembleMultiCityItinerary } from './lib/itinerary-assembler.js';
 import { generateAIThemes, deterministicThemes, aiModelHealth } from './lib/ai-themes.js';
 import { searchPhotos, normaliseQuery }           from './lib/photos.js';
 import { geocodeCity }                            from './lib/providers/nominatim.js';
@@ -83,6 +83,36 @@ function isDestinationAllowed(destination) {
   });
 }
 
+// Trip destinations picked as a whole country (the DestinationCombobox's
+// "all cities" option, value = just the country name, no ", City" suffix)
+// span several of that country's curated cities rather than one place.
+function isCountryWideDestination(destination) {
+  return ALLOWED_COUNTRIES.some(c => normalizeStr(c) === normalizeStr(destination?.trim() ?? ''));
+}
+
+// Picks which cities the trip visits and how many days each gets.
+// `region.cities` already lists the capital/major city first, so shorter
+// trips naturally land on the best-known city instead of a random pick.
+// Roughly one city per 3 days, capped so short trips don't get fragmented
+// and long trips don't run out of curated cities.
+function planCitiesForCountry(country, duration) {
+  const region = BALKAN_DESTINATIONS.find(d => normalizeStr(d.country) === normalizeStr(country));
+  if (!region) return null;
+
+  const numCities = Math.min(region.cities.length, Math.max(1, Math.ceil(duration / 3)), 5);
+  const chosen    = region.cities.slice(0, numCities);
+
+  // Distribute duration across the chosen cities as evenly as possible,
+  // front-loading the remainder onto the earlier (bigger/better-known) cities.
+  const base      = Math.floor(duration / chosen.length);
+  let  remainder  = duration % chosen.length;
+  return chosen.map(city => {
+    const dayCount = base + (remainder > 0 ? 1 : 0);
+    if (remainder > 0) remainder--;
+    return { city, dayCount };
+  });
+}
+
 app.get('/', (_req, res) => res.send('Travel Explorer API ✈️'));
 
 // ─── Itinerary Generator ─────────────────────────────────────────────────────
@@ -127,19 +157,41 @@ async function generateAndSaveItinerary(tripId, tripData) {
     1,
     Math.ceil((new Date(returning_date) - new Date(starting_date)) / 86_400_000)
   );
-  log.info('Itinerary generation started', { tripId, destination, duration });
+  const countryWide = isCountryWideDestination(destination);
+  log.info('Itinerary generation started', { tripId, destination, duration, countryWide });
 
-  // Phase 1 — Fetch verified real-world places (Overpass → OpenTripMap → fallback)
-  const { buckets, source } = await getVerifiedPlaces(destination);
-  const totalPlaces = Object.values(buckets).reduce((s, a) => s + a.length, 0);
-  log.info('Place data ready', { destination, source, totalPlaces });
+  // AI theme generation and real-place fetching are fully independent — run
+  // them concurrently instead of one after another. For a country-wide trip,
+  // each city's places are ALSO fetched concurrently (previously a sequential
+  // for-await loop, which made a 3-city trip take ~3x one city's latency).
+  const themesPromise = generateAIThemes(destination, duration, travel_style)
+    .then(t => t ?? deterministicThemes(destination, duration));
 
-  // Phase 2 — Generate day themes (AI with deterministic fallback)
-  let themes = await generateAIThemes(destination, duration, travel_style);
-  if (!themes) themes = deterministicThemes(destination, duration);
+  let placesPromise;
+  if (countryWide) {
+    const plan = planCitiesForCountry(destination.trim(), duration);
+    placesPromise = Promise.all(
+      plan.map(async ({ city, dayCount }) => {
+        const label = `${city}, ${destination.trim()}`;
+        const { buckets, source } = await getVerifiedPlaces(label);
+        const totalPlaces = Object.values(buckets).reduce((s, a) => s + a.length, 0);
+        log.info('Place data ready (country-wide segment)', { destination: label, source, totalPlaces, dayCount });
+        return { city, buckets, dayCount };
+      })
+    );
+  } else {
+    placesPromise = getVerifiedPlaces(destination).then(({ buckets, source }) => {
+      const totalPlaces = Object.values(buckets).reduce((s, a) => s + a.length, 0);
+      log.info('Place data ready', { destination, source, totalPlaces });
+      return buckets;
+    });
+  }
 
-  // Phase 3 — Assemble the final itinerary payload
-  const payload = assembleItinerary(tripId, tripData, themes, buckets);
+  const [themes, places] = await Promise.all([themesPromise, placesPromise]);
+
+  const payload = countryWide
+    ? assembleMultiCityItinerary(tripId, tripData, themes, places)
+    : assembleItinerary(tripId, tripData, themes, places);
 
   // Phase 4 — Cache for instant serving via /itinerary-fast
   tripCache.set(tripId, payload, 10 * 60 * 1000);

@@ -15,7 +15,7 @@ export interface TripFormValues {
   starting_date: string;
   returning_date: string;
   travel_style: string;
-  budget_total: number;
+  budget_total: string;
 }
 
 export interface TripFormErrors {
@@ -161,16 +161,16 @@ async function validateLocationPair(
     return { destination: "Your starting location appears to be the same city as your destination." };
   }
 
-  const sameCountryError = `"${startingLocation}" is in ${destCountry} — your starting location must be in a different country than your destination.`;
+ // const sameCountryError = `"${startingLocation}" is in ${destCountry} — your starting location must be in a different country than your destination.`;
 
   // Layer 1: offline dataset — catches "Klina", "Kukes", "Peje" typed without a country.
   const localCountry = resolveCountryLocally(startingLocation);
-  if (localCountry) {
+  /*if (localCountry) {
     return normCity(localCountry) === normCity(destCountry)
       ? { destination: sameCountryError }
       : {};
   }
-
+*/
   // Layer 2: unknown place (village, small town) — geocode it, scoped to the
   // destination country first (see GeocodeResult).
   const destCode = BALKAN_DESTINATIONS.find(
@@ -179,9 +179,9 @@ async function validateLocationPair(
   if (!destCode) return {};
 
   const geo = await checkStartCountryByGeocoding(startingLocation, destCode);
-  if (geo.status === "in_dest_country") {
-    return { destination: sameCountryError };
-  }
+  //if (geo.status === "in_dest_country") {
+   // return { destination: sameCountryError };
+  //}
   if (geo.status === "not_found") {
     // The geocoder answered and knows no such place — typo ("Čaglavicaa")
     // or gibberish. Blocking here also prevents same-country bypass via
@@ -230,7 +230,7 @@ export async function validateTripForm(values: TripFormValues): Promise<TripForm
   if (!errors.starting_location && !errors.destination) {
     Object.assign(errors, await validateLocationPair(trimmedStart, destination));
   }
-
+  
   if (!starting_date) {
     errors.starting_date = "Departure date is required";
   } else if (starting_date < today) {
@@ -246,8 +246,8 @@ export async function validateTripForm(values: TripFormValues): Promise<TripForm
   } else if ((travel_style === "road" || travel_style === "resort") && returning_date > maxDefaultReturn) {
     errors.returning_date = "This travel style supports a maximum of 31 days.";
   }
-
-  if (!budget_total || budget_total < 500) {
+const regex = /^(0|[1-9]\d*)$/;
+  if (!budget_total ||  !(regex.test(budget_total)) || budget_total < '500' ) {
     errors.budget_total = "Budget should be at least $500";
   }
 

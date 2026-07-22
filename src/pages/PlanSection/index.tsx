@@ -10,6 +10,7 @@ import { useTheme } from "../../context/ThemeContext";
 import {useTranslation} from "react-i18next";
 import { API_BASE } from "../../constants/api";
 import { useDownloadPDF } from "../../hooks/useDownloadPDF";
+import { clearPendingTripId } from "../../hooks/usePendingTrip";
 import PDFAuthModal from "../../components/DownloadPDF/PDFAuthModal";
 
 interface PlanSectionProps {
@@ -88,16 +89,17 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
               if (!cancelled && itinerary) {
                 setTrip(itinerary.trip);
                 setGenerating(false);
+                clearPendingTripId();
               }
             }
           } catch {
             // network hiccup — keep polling
           }
-  
+
           attempt++;
           await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
         }
-  
+
         // Polling window exhausted — do one final fetch since the server
         // always saves a fallback itinerary, so it should be ready by now.
         if (!cancelled) {
@@ -108,6 +110,7 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
             // nothing to show — user can retry by refreshing
           } finally {
             setGenerating(false);
+            clearPendingTripId();
           }
         }
       };

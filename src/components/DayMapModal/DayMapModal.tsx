@@ -321,9 +321,19 @@ const DayMapModal: React.FC<DayMapModalProps> = ({
             {/* ── Day title bar ──────────────────────────────────────────── */}
             {activeDay && (
               <div className={`px-5 py-2.5 border-b shrink-0 ${border}`}>
-                <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {activeDay.title}
-                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    {activeDay.title}
+                  </h3>
+                  {/* Only set for country-wide trips ("Albania" — all cities) */}
+                  {activeDay.city && (
+                    <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded ${
+                      isDark ? 'bg-sky-900/40 text-sky-400' : 'bg-sky-50 text-sky-700'
+                    }`}>
+                      {activeDay.city}
+                    </span>
+                  )}
+                </div>
                 <p className={`text-xs mt-0.5 ${sub}`}>
                   {activeDay.date &&
                     new Date(activeDay.date).toLocaleDateString('en-US', {

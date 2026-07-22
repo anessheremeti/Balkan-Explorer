@@ -107,60 +107,88 @@ function buildFallback(destination, time, dayId) {
   return { id: crypto.randomUUID(), itinerary_day_id: dayId, start_time: mapTime(time), _source: 'fallback', ...base };
 }
 
-export function assembleItinerary(tripId, tripData, themes, buckets) {
-  const { destination, starting_date, returning_date } = tripData;
-  const duration = Math.max(
-    1,
-    Math.ceil((new Date(returning_date) - new Date(starting_date)) / 86_400_000)
-  );
-
-  // Shuffle each category's pool using the trip ID as seed so every trip is unique.
-  const seed     = tripSeed(tripId);
+// Builds `dayCount` consecutive itinerary days from a single place pool
+// (one city's worth of real places). Shared by both the single-city and
+// multi-city (country-wide) assemblers below.
+//
+// `dayNumberOffset` / `startDate` let a multi-city trip place each city's
+// days at the right absolute position in the overall trip (e.g. a Tirana
+// segment starting at day_number 4 on the 4th calendar day of the trip).
+// `cityLabel` is set only for country-wide trips — it's stored per-day
+// (itinerary_days.city) and used for the photo-search query; single-city
+// trips pass `null` and keep today's exact behaviour.
+function buildDaysForBuckets(buckets, tripId, photoDestination, dayCount, dayNumberOffset, startDate, themesSlice, cityLabel) {
+  // Shuffle each category's pool using the trip ID (+ offset, so different
+  // city segments of the same trip don't all shuffle identically) as seed.
+  const seed     = tripSeed(tripId) + dayNumberOffset;
   const shuffled = {};
   for (const [cat, places] of Object.entries(buckets)) {
     shuffled[cat] = seededShuffle(places, seed + cat.charCodeAt(0));
   }
 
-  // Cursor-based cycling: walks through the pool and wraps around when exhausted.
-  // Prevents any two consecutive days from showing the same place at the top of the list.
-  const cursors = {};
+  // Dedup scope: a real place is used at most once across these `dayCount`
+  // days. For each category we scan forward from the cursor for the next
+  // place not already in `usedPlaceIds`; only when a category's whole pool
+  // is exhausted of unused places do we fall through to the next category.
+  // If every eligible category is exhausted (rare — needs more slots than
+  // distinct real places the area has), pickPlace returns null and the
+  // caller uses the generic filler slot instead of repeating a business name.
+  const cursors      = {};
+  const usedPlaceIds = new Set();
+
   function pickPlace(cats) {
     for (const cat of cats) {
       const pool = shuffled[cat];
       if (!pool?.length) continue;
-      cursors[cat]   = cursors[cat] ?? 0;
-      const item     = pool[cursors[cat] % pool.length];
-      cursors[cat]++;
-      return item;
+      cursors[cat] = cursors[cat] ?? 0;
+
+      for (let step = 0; step < pool.length; step++) {
+        const idx       = (cursors[cat] + step) % pool.length;
+        const candidate = pool[idx];
+        if (!usedPlaceIds.has(candidate.id)) {
+          usedPlaceIds.add(candidate.id);
+          cursors[cat] = idx + 1;
+          return candidate;
+        }
+      }
+      // Every place in this category's pool is already used elsewhere in
+      // this segment — try the next category rather than forcing a repeat.
     }
     return null;
   }
 
-  const startDate = new Date(starting_date);
-  const days      = [];
-
-  for (let i = 0; i < duration; i++) {
-    const dayId = crypto.randomUUID();
-    const date  = new Date(startDate);
-    date.setDate(date.getDate() + i);
+  const days = [];
+  for (let i = 0; i < dayCount; i++) {
+    const dayId       = crypto.randomUUID();
+    const dayNumber   = dayNumberOffset + i + 1;
+    const date        = new Date(startDate);
+    date.setDate(date.getDate() + dayNumberOffset + i);
 
     const itinerary_items = DAILY_SLOTS.map(time => {
       const place = pickPlace(SLOT_CATEGORIES[time] ?? ['attraction']);
-      return place ? buildItem(place, time, dayId, destination) : buildFallback(destination, time, dayId);
+      return place
+        ? buildItem(place, time, dayId, photoDestination)
+        : buildFallback(photoDestination, time, dayId);
     });
 
     days.push({
       id:              dayId,
       trip_id:         tripId,
-      day_number:      i + 1,
-      title:           themes[i] ?? `Day ${i + 1} — ${destination}`,
+      day_number:      dayNumber,
+      title:           themesSlice[i] ?? `Day ${dayNumber} — ${photoDestination}`,
       date:            date.toISOString().split('T')[0],
+      // Always present (null when not applicable) so every row in a single
+      // Supabase insert() batch shares the same column shape.
+      city:            cityLabel ?? null,
       itinerary_items,
     });
   }
+  return days;
+}
 
-  const allItems   = days.flatMap(d => d.itinerary_items);
-  const realCount  = allItems.filter(x => x._source !== 'fallback').length;
+function logAssembled(tripId, duration, days) {
+  const allItems  = days.flatMap(d => d.itinerary_items);
+  const realCount = allItems.filter(x => x._source !== 'fallback').length;
   log.info('Itinerary assembled', {
     tripId,
     duration,
@@ -168,6 +196,57 @@ export function assembleItinerary(tripId, tripData, themes, buckets) {
     realPlaces: realCount,
     fallback:   allItems.length - realCount,
   });
+}
+
+// Single destination (a specific city, e.g. "Prizren, Kosovo") — unchanged
+// behaviour, all days share one place pool.
+export function assembleItinerary(tripId, tripData, themes, buckets) {
+  const { destination, starting_date, returning_date } = tripData;
+  const duration = Math.max(
+    1,
+    Math.ceil((new Date(returning_date) - new Date(starting_date)) / 86_400_000)
+  );
+
+  const days = buildDaysForBuckets(
+    buckets, tripId, destination, duration, 0, new Date(starting_date), themes, null
+  );
+  logAssembled(tripId, duration, days);
+
+  return {
+    trip: {
+      id:    tripId,
+      ...tripData,
+      title: tripData.title ?? `${tripData.starting_location} → ${tripData.destination}`,
+    },
+    days,
+  };
+}
+
+// Country-wide destination (e.g. destination = "Albania") — the trip is
+// split across several cities within that country. `segments` is produced
+// by the caller (server.js) as [{ city, buckets, dayCount }, …], already
+// covering the full trip duration between them. Each city's days get their
+// own independent place pool (no real place is ever shared across cities
+// anyway — OSM/OpenTripMap ids are globally unique) and are tagged with
+// `city` so the UI can show which city that day belongs to.
+export function assembleMultiCityItinerary(tripId, tripData, themes, segments) {
+  const { starting_date, returning_date } = tripData;
+  const duration = Math.max(
+    1,
+    Math.ceil((new Date(returning_date) - new Date(starting_date)) / 86_400_000)
+  );
+  const startDate = new Date(starting_date);
+
+  let offset = 0;
+  const days = [];
+  for (const { city, buckets, dayCount } of segments) {
+    const themesSlice = themes.slice(offset, offset + dayCount);
+    days.push(
+      ...buildDaysForBuckets(buckets, tripId, city, dayCount, offset, startDate, themesSlice, city)
+    );
+    offset += dayCount;
+  }
+  logAssembled(tripId, duration, days);
 
   return {
     trip: {

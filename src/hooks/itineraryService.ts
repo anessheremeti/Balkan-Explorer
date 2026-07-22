@@ -49,6 +49,9 @@ export interface ItineraryDay {
   day_number: number;
   title: string;
   date: string;
+  // Set only for country-wide trips ("Albania" — all cities), naming which
+  // city that day is in. Null for a normal single-city trip.
+  city?: string | null;
   itinerary_items: ItineraryItem[];
 }
 
@@ -149,6 +152,7 @@ export async function getItineraryByTripId(
           day_number,
           title,
           date,
+          city,
           itinerary_items(
             id,
             itinerary_day_id,

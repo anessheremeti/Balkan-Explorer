@@ -9,6 +9,8 @@ const PHOTO_MAX_BYTES = 2.5 * 1024 * 1024;
 
 const EMPTY_FORM: NewDeal = { city: "", country: ALLOWED_COUNTRIES[0], title: "", description: "", agency: "", currency: "EUR" };
 
+const today = new Date().toISOString().split("T")[0];
+
 const DealsScreen: React.FC = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,7 +142,8 @@ const DealsScreen: React.FC = () => {
             </div>
             <div>
               <label className={labelCls}>Valid until</label>
-              <input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className={inputCls} />
+              <input type="date" value={validUntil} min={today} onChange={e => setValidUntil(e.target.value)} className={inputCls} />
+              <p className="text-[11px] text-slate-400 mt-1">Deals past this date stop showing on the public site.</p>
             </div>
             <div className="sm:col-span-2">
               <label className={labelCls}>Agency</label>
@@ -205,7 +208,14 @@ const DealsScreen: React.FC = () => {
                   )}
                   <div className="flex items-start justify-between gap-3 p-4">
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm text-slate-800">{d.title}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sm text-slate-800">{d.title}</p>
+                        {d.valid_until && d.valid_until < today && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-50 text-red-500">
+                            Expired — hidden from site
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs mt-0.5 text-slate-500">{d.city}, {d.country}</p>
                       {d.description && (
                         <p className="text-xs mt-1.5 leading-relaxed text-slate-500">{d.description}</p>

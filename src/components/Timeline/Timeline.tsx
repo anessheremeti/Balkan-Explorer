@@ -1,7 +1,8 @@
-import { ChevronDown, Star, MapPin, Navigation, Map as MapIcon, Loader2, Compass } from "lucide-react";
+import { ChevronDown, Star, MapPin, Navigation, Map as MapIcon, Loader2, Compass, Landmark } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../../createClient";
 import { useItemPhoto } from "../../hooks/useItemPhoto";
+import { clearPendingTripId } from "../../hooks/usePendingTrip";
 import {
   getLatestTripItinerary,
   getItineraryByTripId,
@@ -111,6 +112,7 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
               setItineraryDays(itinerary.days);
               setExpandedDay(1);
               setGenerating(false);
+              clearPendingTripId();
             }
             return;
           }
@@ -122,8 +124,24 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
       }
 
-      // Timed out
-      
+      // Polling window exhausted — the server always saves a fallback
+      // itinerary, so do one last fetch instead of leaving the spinner
+      // stuck forever (this branch was previously a no-op).
+      if (!cancelled) {
+        try {
+          const res = await getItineraryByTripId(pendingTripId!);
+          if (res.trip) {
+            setTrip(res.trip);
+            setItineraryDays(res.days);
+            setExpandedDay(1);
+          }
+        } catch {
+          // nothing to show — user can retry by refreshing
+        } finally {
+          setGenerating(false);
+          clearPendingTripId();
+        }
+      }
     };
 
     poll();
@@ -230,13 +248,25 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
                   <h3 className={`text-lg font-bold ${theme === "dark" ? "text-gray-300" : "text-slate-900"}`}>
                     {day.title}
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    {new Date(day.date).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xs text-slate-500">
+                      {new Date(day.date).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                    {/* Only shown for country-wide trips ("Albania" — all cities),
+                        where each day can be in a different city. */}
+                    {day.city && (
+                      <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded ${
+                        theme === "dark" ? "bg-sky-900/40 text-sky-400" : "bg-sky-50 text-sky-700"
+                      }`}>
+                        <Landmark size={10} />
+                        {day.city}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">

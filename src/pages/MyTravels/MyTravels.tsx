@@ -88,6 +88,8 @@ const DayRow: React.FC<DayRowProps> = ({ day, isDark, onOpenMap }) => {
                 : `Day ${day.day_number}`}
               {' · '}
               {day.items.length} {day.items.length === 1 ? 'activity' : 'activities'}
+              {/* Only set for country-wide trips ("Albania" — all cities) */}
+              {day.city && <> {' · '} <span className="font-semibold text-[#0ea5e9]">{day.city}</span></>}
             </p>
           </div>
         </div>
