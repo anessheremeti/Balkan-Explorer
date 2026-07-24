@@ -2,13 +2,18 @@ import OpenAI from 'openai';
 import { CircuitBreaker } from './circuit-breaker.js';
 import { log } from './logger.js';
 
-// Working free models on OpenRouter as of mid-2025, ordered by reliability
+// Hand-picked free-model slugs go stale as OpenRouter's free lineup changes
+// (this list itself broke — several entries were pulled from the free tier or
+// renamed, e.g. "microsoft/phi-4:free" is paid-only now). `openrouter/free`
+// is OpenRouter's own auto-router: it always resolves to a currently
+// available free model server-side, so it can't go stale the way a
+// hardcoded slug can. Trade-off: which underlying free model answers is out
+// of our control, so latency varies call to call (seen 2s–38s in testing) —
+// timeoutMs stays tight rather than growing to accommodate the slowest case,
+// since deterministicThemes() below is a perfectly good fallback and AI
+// theme flavor-text is not worth delaying the whole itinerary for.
 const MODELS = [
-  { id: 'google/gemini-2.0-flash-exp:free',            timeoutMs: 15_000 },
-  { id: 'deepseek/deepseek-r1-distill-llama-70b:free', timeoutMs: 20_000 },
-  { id: 'meta-llama/llama-4-scout:free',                timeoutMs: 15_000 },
-  { id: 'qwen/qwen3-8b:free',                          timeoutMs: 12_000 },
-  { id: 'microsoft/phi-4:free',                        timeoutMs: 12_000 },
+  { id: 'openrouter/free', timeoutMs: 15_000 },
 ];
 
 // Per-model circuit breakers: open after 2 failures, recheck after 5 minutes.
@@ -84,7 +89,13 @@ export async function generateAIThemes(destination, duration, travelStyle) {
                 { role: 'user',   content: prompt },
               ],
               temperature: 0.8,
-              max_tokens:  400,
+              // openrouter/free can route to a reasoning model (e.g. an
+              // Nvidia Nemotron variant) that spends its token budget
+              // thinking out loud in `content` before the actual JSON — at
+              // 400 tokens it was getting cut off (finish_reason: "length")
+              // mid-thought, never reaching the answer. 1500 gives room for
+              // that reasoning to finish before the real output.
+              max_tokens:  1500,
             });
             const raw = extractJSON(completion.choices[0]?.message?.content ?? '');
             if (!raw) throw new Error('No JSON found in response');

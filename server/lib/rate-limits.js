@@ -14,17 +14,6 @@ export const tripCreateLimiter = rateLimit({
   handler: json429('Trip creation limit reached — try again in an hour.'),
 });
 
-// GET /api/photos/search
-// Called per timeline item on page load (~20–40 calls per itinerary).
-// Google Places is billed per call; 120/min gives generous headroom without abuse.
-export const photoSearchLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 120,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
-  handler: json429('Too many photo requests — retry in a moment.'),
-});
-
 // GET /api/trips/:id/itinerary-status
 // Polled every 2 s for up to 75 attempts per trip. 150/5 min covers that
 // with headroom for the final fallback fetch and any page reloads.

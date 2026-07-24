@@ -12,7 +12,14 @@ class Cache {
   set(key, value, ttlMs) {
     const existing = this.store.get(key);
     if (existing?.timer) clearTimeout(existing.timer);
-    const timer = setTimeout(() => this.store.delete(key), ttlMs);
+    // setTimeout's delay is a 32-bit signed int internally — anything over
+    // ~24.8 days (2^31-1 ms) silently overflows and fires almost immediately
+    // instead of throwing, so a long TTL (e.g. the 30-day Wikidata photo
+    // cache) would evict its entry within ~1ms of being set. `exp` below is
+    // computed from the real ttlMs and stays correct regardless; only the
+    // eager-delete timer needs clamping.
+    const timerMs = Math.min(ttlMs, 2_147_483_647);
+    const timer = setTimeout(() => this.store.delete(key), timerMs);
     if (timer.unref) timer.unref(); // don't keep the process alive
     this.store.set(key, { value, timer, exp: Date.now() + ttlMs });
     this.sets++;

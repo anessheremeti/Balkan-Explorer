@@ -10,6 +10,10 @@ export const usersService = () => {
     if (session?.access_token) {
       sessionStorage.setItem("access_token", session.access_token);
       sessionStorage.setItem("user_id", session.user.id);
+      // Clear any cached name from a previous account on this browser session
+      // — Navbar seeds its display name from this key, so a stale value here
+      // would flash the wrong user's name until the fresh fetch overwrites it.
+      sessionStorage.removeItem("user_full_name");
     }
   };
 
@@ -18,6 +22,7 @@ export const usersService = () => {
 
     sessionStorage.removeItem("access_token");
     sessionStorage.removeItem("user_id");
+    sessionStorage.removeItem("user_full_name");
   };
 
   const getUserName = async (userId: string) => {

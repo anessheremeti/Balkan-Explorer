@@ -11,12 +11,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 import { log }                                    from './lib/logger.js';
-import { tripCreateLimiter, photoSearchLimiter, statusPollLimiter, guestMigrateLimiter, geocodeLimiter, inquiryLimiter } from './lib/rate-limits.js';
+import { tripCreateLimiter, statusPollLimiter, guestMigrateLimiter, geocodeLimiter, inquiryLimiter } from './lib/rate-limits.js';
 import { tripCache, photoCache, proxyGeoCache }   from './lib/cache.js';
 import { getVerifiedPlaces, getHealthReport }     from './lib/place-orchestrator.js';
 import { assembleItinerary, assembleMultiCityItinerary } from './lib/itinerary-assembler.js';
 import { generateAIThemes, deterministicThemes, aiModelHealth } from './lib/ai-themes.js';
-import { searchPhotos, normaliseQuery }           from './lib/photos.js';
+import { resolvePhotosForDays }                   from './lib/photos.js';
+import { mapWithConcurrency }                     from './lib/concurrency.js';
 import { geocodeCity }                            from './lib/providers/nominatim.js';
 
 // ─── Startup validation ───────────────────────────────────────────────────────
@@ -121,7 +122,7 @@ async function persistItinerary(tripId, days) {
   // Remove _prefixed in-memory fields; map them into the metadata jsonb column.
   const daysToInsert  = days.map(({ itinerary_items: _, ...day }) => day);
   const itemsToInsert = days.flatMap(d =>
-    d.itinerary_items.map(({ _source, _place_id, _lat, _lon, _photo_query, _name_local, ...item }) => ({
+    d.itinerary_items.map(({ _source, _place_id, _lat, _lon, _name_local, _wikidata, _image_url, ...item }) => ({
       ...item,
       place_id: null,
       metadata: {
@@ -129,8 +130,9 @@ async function persistItinerary(tripId, days) {
         place_id:   _place_id   ?? null,
         lat:        _lat        ?? null,
         lon:        _lon        ?? null,
-        photo_query: _photo_query ?? null,
         name_local: _name_local ?? null,
+        wikidata:   _wikidata   ?? null,
+        image_url:  _image_url  ?? null,
       },
     }))
   );
@@ -170,15 +172,23 @@ async function generateAndSaveItinerary(tripId, tripData) {
   let placesPromise;
   if (countryWide) {
     const plan = planCitiesForCountry(destination.trim(), duration);
-    placesPromise = Promise.all(
-      plan.map(async ({ city, dayCount }) => {
+    // Overpass's public instance grants each client a small number of
+    // concurrent request slots and load-sheds anyone over it (documented fair
+    // -use policy) — firing every city's query at once via unbounded
+    // Promise.all was itself causing the 504 timeouts seen in a multi-city
+    // trip (one city succeeds slowly, a concurrently-fired one gets
+    // rejected). Capping at 2 in-flight keeps us within that budget.
+    placesPromise = (async () => {
+      const results = new Array(plan.length);
+      await mapWithConcurrency(plan, 2, async ({ city, dayCount }, idx) => {
         const label = `${city}, ${destination.trim()}`;
         const { buckets, source } = await getVerifiedPlaces(label);
         const totalPlaces = Object.values(buckets).reduce((s, a) => s + a.length, 0);
         log.info('Place data ready (country-wide segment)', { destination: label, source, totalPlaces, dayCount });
-        return { city, buckets, dayCount };
-      })
-    );
+        results[idx] = { city, buckets, dayCount };
+      });
+      return results;
+    })();
   } else {
     placesPromise = getVerifiedPlaces(destination).then(({ buckets, source }) => {
       const totalPlaces = Object.values(buckets).reduce((s, a) => s + a.length, 0);
@@ -193,13 +203,23 @@ async function generateAndSaveItinerary(tripId, tripData) {
     ? assembleMultiCityItinerary(tripId, tripData, themes, places)
     : assembleItinerary(tripId, tripData, themes, places);
 
-  // Phase 4 — Cache for instant serving via /itinerary-fast
+  // Phase 4 — Cache for instant serving via /itinerary-fast. The trip is
+  // visible right away, before photos are resolved — items without a photo
+  // yet simply show their category icon.
   tripCache.set(tripId, payload, 10 * 60 * 1000);
 
-  // Phase 5 — Persist to Supabase (non-blocking)
-  persistItinerary(tripId, payload.days).catch(err =>
-    log.error('Persist failed', { tripId, error: err.message })
-  );
+  // Phase 5 — Resolve real-place photos once, server-side, in the
+  // background — then persist. Not awaited by the caller (create-fast has
+  // already responded by this point); `payload` is mutated in place, so the
+  // tripCache entry set above picks up the resolved URLs automatically
+  // (same object reference) for anyone still on the fast-serve path.
+  resolvePhotosForDays(payload.days, destination)
+    .catch(err => log.warn('Photo resolution failed', { tripId, error: err.message }))
+    .finally(() => {
+      persistItinerary(tripId, payload.days).catch(err =>
+        log.error('Persist failed', { tripId, error: err.message })
+      );
+    });
 }
 
 // ─── Routes: Trip creation ────────────────────────────────────────────────────
@@ -286,21 +306,6 @@ app.get('/api/trips/:id/itinerary-fast', (req, res) => {
   res.json(payload);
 });
 
-// ─── Routes: Photo search ─────────────────────────────────────────────────────
-
-app.get('/api/photos/search', photoSearchLimiter, async (req, res) => {
-  const { q, raw, name, lat, lon } = req.query;
-  if (!q) return res.status(400).json({ error: 'Query required' });
-  try {
-    const context = (name && lat && lon)
-      ? { name, lat: parseFloat(lat), lon: parseFloat(lon) }
-      : null;
-    const url = await searchPhotos(normaliseQuery(q), raw, context);
-    res.json({ url });
-  } catch {
-    res.status(500).json({ error: 'Photo search failed' });
-  }
-});
 
 // ─── Routes: Geocode proxy (frontend map centering) ───────────────────────────
 

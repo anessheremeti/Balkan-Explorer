@@ -36,6 +36,18 @@ const TAG_CATEGORY = {
   dog_park:        'park',
 };
 
+// `historic=*` is tagged on a huge range of OSM features, from genuine
+// visit-worthy sites (fortresses, ruins, monasteries) down to a single
+// milestone or boundary stone on the side of a road. Unlike the other tag
+// families above (whose query already only requests specific values), the
+// historic query fetches every value with a name — so we filter it down to
+// an allowlist of types someone would actually plan a visit around.
+const HISTORIC_ALLOW = new Set([
+  'castle', 'fort', 'fortress', 'citywalls', 'city_gate', 'archaeological_site',
+  'ruins', 'monastery', 'church', 'monument', 'memorial', 'tower',
+  'manor', 'palace', 'tomb', 'wayside_shrine', 'building',
+]);
+
 // Build an Overpass QL query using individual equality filters (no regex).
 // Includes both node and way elements; ways carry a 'center' coordinate.
 function buildQuery(south, west, north, east) {
@@ -81,7 +93,12 @@ async function callEndpoint(endpoint, query, attempt = 0) {
       ...(useGet ? {} : { 'Content-Type': 'application/x-www-form-urlencoded' }),
     },
     ...(useGet ? {} : { body: `data=${encodeURIComponent(query)}` }),
-    signal: AbortSignal.timeout(35_000),
+    // A healthy response for our bounding box comes back in 2-10s (observed).
+    // 35s let one bad attempt burn a huge chunk of the whole request just
+    // waiting on a server that's already overloaded — 12s fails fast enough
+    // to let the retry/next-endpoint/OpenTripMap fallback actually kick in
+    // within a reasonable total time.
+    signal: AbortSignal.timeout(12_000),
   });
 
   if (res.status === 429) throw Object.assign(new Error('Rate limited (429)'), { retryable: true, status: 429 });
@@ -94,7 +111,12 @@ async function callEndpoint(endpoint, query, attempt = 0) {
 
 async function queryWithRetry(endpoint, breaker, query) {
   return breaker.execute(async () => {
-    const MAX_ATTEMPTS = 3;
+    // 2 attempts, not 3 — combined with the 12s per-attempt timeout below,
+    // this bounds a single endpoint's worst case to ~25s instead of the
+    // ~110s it could previously reach (3 × 35s + backoff), which was the
+    // dominant cause of multi-minute itinerary generation when Overpass was
+    // under load (observed 149s for one city before this fix).
+    const MAX_ATTEMPTS = 2;
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       try {
         return await callEndpoint(endpoint, query, attempt);
@@ -118,6 +140,12 @@ function parseElements(elements) {
   for (const el of elements) {
     const tags = el.tags ?? {};
 
+    // Elements whose primary purpose is a road/junction (roundabouts, milestones,
+    // marked crossings…) sometimes also carry a secondary `historic` tag because
+    // a monument sits at that spot — but the element itself is the road feature,
+    // not a standalone visitable site. Drop these before they reach an itinerary.
+    if (tags.highway) continue;
+
     // Name resolution priority (most → least English-friendly):
     // 1. name:en       — explicit English tag
     // 2. int_name      — international/Latin name (OSM convention)
@@ -130,7 +158,15 @@ function parseElements(elements) {
                   ?? null;
     const { name, name_local: name_local_display } = resolveName(tags['name'], latinTag);
 
-    if (!name) continue;
+    if (!name || name.length < 2 || /^\d+$/.test(name)) continue;
+
+    // Some regions have community-mapped roads/junctions/roundabouts tagged
+    // tourism=attraction or tourism=artwork instead of the (correct) highway
+    // tag — the `tags.highway` guard above can't catch these since the road
+    // tag itself is missing. Filter by name instead: local mappers in the
+    // Balkans commonly name these "Rruga/Ruga <person>" (Street of X) or
+    // "Rrethi <place>" (Roundabout at X) — never a real point of interest.
+    if (/^(rruga|ruga|rrethi|autostrada|bulevardi)\b/i.test(name)) continue;
 
     const { amenity, tourism, leisure, historic } = el.tags ?? {};
 
@@ -138,7 +174,7 @@ function parseElements(elements) {
     if (amenity)  category = TAG_CATEGORY[amenity];
     if (!category && tourism)  category = TAG_CATEGORY[tourism]  ?? 'attraction';
     if (!category && leisure)  category = TAG_CATEGORY[leisure];
-    if (!category && historic) category = 'historic';
+    if (!category && historic && HISTORIC_ALLOW.has(historic)) category = 'historic';
 
     if (!category || !buckets[category]) continue;
 
@@ -159,6 +195,10 @@ function parseElements(elements) {
       website:        tags.website        ?? null,
       phone:          tags.phone          ?? null,
       opening_hours:  tags.opening_hours  ?? null,
+      // Cross-reference to the Wikidata entity, when the OSM mapper linked one.
+      // Lets the photo pipeline fetch the exact, unambiguous image (P18 claim)
+      // for this specific place instead of a fuzzy name/keyword match.
+      wikidata:       tags.wikidata       ?? null,
     });
   }
 

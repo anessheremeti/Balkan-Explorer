@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import {  Send, Menu, X, ChevronDown, UserCircle2, Briefcase, Settings, HelpCircle, LogOut } from 'lucide-react';
+import {  Menu, X, ChevronDown, UserCircle2, Briefcase, Settings, HelpCircle, LogOut } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
 import { usersService } from '../../hooks/usersService';
@@ -16,7 +16,13 @@ const Navbar: React.FC = () => {
   const access_token = sessionStorage.getItem("access_token");
   const userId = sessionStorage.getItem("user_id");
   const { getUserName } = usersService();
-  const [userName, setUserName] = useState<string | null>(null);
+  // Every page mounts its own <Navbar/> (no shared layout), so this remounts
+  // on every navigation. Seeding from the cached value means the username
+  // span is already in its final state on first paint here, instead of
+  // popping in after a fresh async fetch — that width change, combined with
+  // the centered flex-1 nav links between it and the logo, was what made the
+  // nav visibly shift on every page switch.
+  const [userName, setUserName] = useState<string | null>(() => sessionStorage.getItem("user_full_name"));
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { theme } = useTheme();
@@ -32,6 +38,8 @@ const Navbar: React.FC = () => {
 
       if (!cancelled) {
         setUserName(name ?? null);
+        if (name) sessionStorage.setItem("user_full_name", name);
+        else sessionStorage.removeItem("user_full_name");
       }
     } catch (err) {
       console.error("Failed to fetch username:", err);
@@ -52,10 +60,10 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
         <div className="flex items-center justify-between h-18">
           
-          <div className={`flex items-center shrink-0 cursor-pointer group ${isDark ? 'text-white' : 'text-[#1e293b]'}`}>
-            <Link to="/" className='flex'>
-            <div className="bg-[#0ea5e9] p-1.5 rounded-[10px] mr-3 transition-transform duration-200 group-hover:scale-105">
-              <Send size={20} className="text-white fill-white rotate-[-15deg] translate-x-[-1px] translate-y-[1px]" />
+          <div className={`flex items-center  shrink-0 cursor-pointer group ${isDark ? 'text-white' : 'text-[#1e293b]'}`}>
+            <Link to="/" className='flex items-center'>
+            <div className="p-1 rounded-[10px] mr-3 transition-transform duration-200 group-hover:scale-105">
+              <img src="/icon.png" alt="BalkanExplorer logo" className="w-8 h-8 object-contain" />
             </div>
             <span className={`text-[20px] font-bold tracking-tight ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`}>
               BalkanExplorer
@@ -64,13 +72,11 @@ const Navbar: React.FC = () => {
           </div>
 
           <div className={`hidden md:flex items-center justify-center flex-1 space-x-8 px-8 ${isDark ? 'text-white' : 'text-[#1e293b]'}`}>
-            <Link to='/destinations'><NavLink href='/destinations' className={`hover:text-[#0ea5e9] ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`}>{t('destinations')}</NavLink></Link>
-            <Link to="/how-it-works"><NavLink className={`hover:text-[#0ea5e9] ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`} href="/how-it-works">{t('how it works')}</NavLink></Link>
-            <Link to="/community">
-              <NavLink className={`hover:text-[#0ea5e9] ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`} href="/community">
-                {t('community')}
-              </NavLink>
-            </Link>
+            <NavLink to='/destinations' className={`hover:text-[#0ea5e9] ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`}>{t('destinations')}</NavLink>
+            <NavLink to="/how-it-works" className={`hover:text-[#0ea5e9] ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`}>{t('how it works')}</NavLink>
+            <NavLink to="/community" className={`hover:text-[#0ea5e9] ${isDark ? 'text-slate-400 hover:text-[#0ea5e9]' : 'text-slate-500 hover:text-[#0ea5e9]'}`}>
+              {t('community')}
+            </NavLink>
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
@@ -125,7 +131,7 @@ const Navbar: React.FC = () => {
 
               {!access_token ? (
                  <Link className='flex min-w-fit' to="/signup">
-            <Button variant="primary" href="#signup">
+            <Button variant="primary">
               {t('sign up')}
             </Button></Link>
               ) : ''}
@@ -148,15 +154,9 @@ const Navbar: React.FC = () => {
       {isMenuOpen && (
         <div className={`md:hidden border-b animate-in slide-in-from-top duration-300 ${isDark ? 'bg-slate-950 border-slate-700' : 'bg-white border-slate-100'}`}>
           <div className="px-4 pt-2 pb-6 space-y-1">
-            <Link to='/destinations' onClick={() => setIsMenuOpen(false)}>
-              <MobileNavLink href="/destinations">{t('destinations')}</MobileNavLink>
-            </Link>
-            <Link to="/how-it-works" onClick={() => setIsMenuOpen(false)}>
-              <MobileNavLink href="/how-it-works">{t('how it works')}</MobileNavLink>
-            </Link>
-            <Link to="/community" onClick={() => setIsMenuOpen(false)}>
-              <MobileNavLink href="/community">{t('community')}</MobileNavLink>
-            </Link>
+            <MobileNavLink to='/destinations' onClick={() => setIsMenuOpen(false)}>{t('destinations')}</MobileNavLink>
+            <MobileNavLink to="/how-it-works" onClick={() => setIsMenuOpen(false)}>{t('how it works')}</MobileNavLink>
+            <MobileNavLink to="/community" onClick={() => setIsMenuOpen(false)}>{t('community')}</MobileNavLink>
 
             {access_token ? (
               <div className={`pt-4 mt-3 border-t ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
@@ -239,35 +239,36 @@ const Button: React.FC<ButtonProps> = ({ variant = 'primary', href, onClick, chi
   );
 };
 
-interface CustomNavLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
-  href: string;
+interface CustomNavLinkProps {
+  to: string;
   children: React.ReactNode;
+  className?: string;
 }
 
-const NavLink: React.FC<CustomNavLinkProps> = ({
-  href,
-  children,
-  className = "",
-  ...props
-}) => {
+// Renders its own <Link> (not wrapped in one by the caller) — nesting an <a>
+// inside another <a> is invalid HTML; browsers silently close the outer one
+// early when they hit the inner one, so React's idea of the tree and the
+// browser's actual rendered DOM diverge, which showed up as nav items
+// visibly shifting on interaction.
+const NavLink: React.FC<CustomNavLinkProps> = ({ to, children, className = "" }) => {
   return (
-    <a
-      href={href}
+    <Link
+      to={to}
       className={`text-[15px] font-medium text-[#64748b] hover:text-[#0ea5e9] transition-colors duration-200 whitespace-nowrap focus:outline-none focus:text-[#0ea5e9] ${className}`}
-      {...props}
     >
       {children}
-    </a>
+    </Link>
   );
 };
 
-const MobileNavLink: React.FC<{ href: string; children: React.ReactNode }> = ({ href, children }) => (
-  <a 
-    href={href} 
+const MobileNavLink: React.FC<{ to: string; onClick?: () => void; children: React.ReactNode }> = ({ to, onClick, children }) => (
+  <Link
+    to={to}
+    onClick={onClick}
     className="block px-3 py-3 rounded-lg text-base font-semibold text-slate-700 hover:text-[#0ea5e9] hover:bg-slate-50 transition-all active:bg-slate-100"
   >
     {children}
-  </a>
+  </Link>
 );
 
 export default Navbar;

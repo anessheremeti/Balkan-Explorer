@@ -13,26 +13,40 @@ const SLOT_CATEGORIES = {
   '20:00': ['restaurant', 'cafe'],
 };
 
+// OSM `cuisine` values are raw, semicolon-separated tag tokens (e.g.
+// "coffee_shop;burger;sandwich;chicken;ice_cream") meant for machine
+// filtering, not display. Humanize to "coffee shop, burger, sandwich".
+function humanizeCuisine(raw) {
+  if (!raw) return null;
+  const words = raw.split(';').map(w => w.trim().replace(/_/g, ' ')).filter(Boolean);
+  return words.slice(0, 3).join(', ') || null;
+}
+
 const PLACE_META = {
-  restaurant: { type: 'food',     desc: p => `Enjoy a meal at ${p.name}${p.cuisine ? ` — known for its ${p.cuisine} cuisine` : ''}.` },
+  restaurant: { type: 'food',     desc: p => {
+    const cuisine = humanizeCuisine(p.cuisine);
+    return `Enjoy a meal at ${p.name}${cuisine ? ` — known for its ${cuisine}` : ''}.`;
+  } },
   cafe:       { type: 'food',     desc: p => `Grab coffee and a bite at ${p.name}, a popular local spot.` },
   museum:     { type: 'activity', desc: p => `Explore ${p.name} and discover the history and culture of the region.` },
   attraction: { type: 'activity', desc: p => `Visit ${p.name}, a notable landmark in the area.` },
   viewpoint:  { type: 'activity', desc: p => `Head to ${p.name} for panoramic views of the city.` },
   park:       { type: 'activity', desc: p => `Enjoy a walk through ${p.name}.` },
-  historic:   { type: 'activity', desc: p => `Discover ${p.name}, a site with deep local significance.` },
-};
-
-// Category label used to enrich the photo search query so generic names like
-// "Star" or "Park" don't pull unrelated imagery from photo APIs.
-const CATEGORY_PHOTO_LABEL = {
-  restaurant: 'restaurant',
-  cafe:       'cafe coffee',
-  museum:     'museum',
-  attraction: 'landmark',
-  viewpoint:  'panoramic view',
-  park:       'park garden',
-  historic:   'historic site',
+  historic:   { type: 'activity', desc: p => {
+    // `subtype` carries the raw OSM historic=* value — tailor the phrasing so a
+    // memorial plaque to a named person doesn't read like a generic/broken
+    // entry ("Discover Jane Doe, a site with deep local significance").
+    switch (p.subtype) {
+      case 'memorial':            return `Pay a visit to the memorial honoring ${p.name}.`;
+      case 'monument':            return `Visit the ${p.name} monument, a piece of local history.`;
+      case 'archaeological_site': return `Explore the ${p.name} archaeological site.`;
+      case 'castle': case 'fort': case 'fortress':
+        return `Explore ${p.name}, a historic fortress overlooking the area.`;
+      case 'ruins':               return `Wander the ruins of ${p.name}.`;
+      case 'tomb':                return `Visit the ${p.name} tomb, a site of historical importance.`;
+      default:                    return `Discover ${p.name}, a site with deep local significance.`;
+    }
+  } },
 };
 
 const FALLBACK_SLOTS = {
@@ -71,20 +85,8 @@ function tripSeed(tripId) {
   return parseInt((tripId ?? '00000000').replace(/-/g, '').slice(0, 8), 16);
 }
 
-function buildItem(place, time, dayId, destination) {
-  const meta     = PLACE_META[place.category] ?? { type: 'activity', desc: p => `Visit ${p.name}.` };
-  const catLabel = CATEGORY_PHOTO_LABEL[place.category] ?? '';
-  // Category + destination only — deliberately omits the business's proper
-  // name. Stock photo APIs (Pexels/Pixabay/Wikipedia) do literal keyword
-  // matching with no concept of real-world businesses, so a name like "Peja
-  // Grill" can pull back a totally unrelated photo (a coastal cliff, once
-  // seen in testing) just because some word in the phrase loosely matched.
-  // The actual business photo is fetched separately via Google Places using
-  // place.name + coordinates, which DOES understand real-world names. This
-  // query is only the safe, generic fallback for when that lookup fails.
-  const photoQuery = destination
-    ? `${catLabel || place.category} ${destination}`.replace(/\s+/g, ' ').trim()
-    : null;
+function buildItem(place, time, dayId) {
+  const meta = PLACE_META[place.category] ?? { type: 'activity', desc: p => `Visit ${p.name}.` };
   return {
     id:               crypto.randomUUID(),
     itinerary_day_id: dayId,
@@ -92,13 +94,16 @@ function buildItem(place, time, dayId, destination) {
     title:            place.name,
     description:      meta.desc(place),
     start_time:       mapTime(time),
-    // prefixed fields — stripped before DB insert, stored in metadata jsonb
-    _source:      place.id.startsWith('otm:') ? 'opentripmap' : 'openstreetmap',
-    _place_id:    place.id,
-    _lat:         place.lat,
-    _lon:         place.lon,
-    _photo_query: photoQuery,
-    _name_local:  place.name_local ?? null,
+    // prefixed fields — stripped before DB insert, stored in metadata jsonb.
+    // _image_url is filled in later, once, by resolvePhotosForDays()
+    // (server.js) — never resolved lazily per page view.
+    _source:     place.id.startsWith('otm:') ? 'opentripmap' : 'openstreetmap',
+    _place_id:   place.id,
+    _lat:        place.lat,
+    _lon:        place.lon,
+    _name_local: place.name_local ?? null,
+    _wikidata:   place.wikidata ?? null,
+    _image_url:  null,
   };
 }
 
@@ -167,7 +172,7 @@ function buildDaysForBuckets(buckets, tripId, photoDestination, dayCount, dayNum
     const itinerary_items = DAILY_SLOTS.map(time => {
       const place = pickPlace(SLOT_CATEGORIES[time] ?? ['attraction']);
       return place
-        ? buildItem(place, time, dayId, photoDestination)
+        ? buildItem(place, time, dayId)
         : buildFallback(photoDestination, time, dayId);
     });
 

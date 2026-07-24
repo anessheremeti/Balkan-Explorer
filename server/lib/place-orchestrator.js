@@ -65,7 +65,7 @@ async function fetchFromOpenTripMap(lat, lon) {
     // OTM SimpleFeature: { xid, name, kinds, point:{lon,lat} }
     // OTM names come from OSM data and can be in any local script (Cyrillic etc.)
     const { name, name_local } = resolveName(feat.name, null);
-    if (!name) continue;
+    if (!name || name.length < 2 || /^\d+$/.test(name)) continue;
 
     const fLat = parseFloat(feat.point?.lat);
     const fLon = parseFloat(feat.point?.lon);
@@ -77,8 +77,11 @@ async function fetchFromOpenTripMap(lat, lon) {
       const mapped = OTM_KIND_MAP[k.trim()];
       if (mapped) { category = mapped; break; }
     }
-    if (!category) category = 'attraction';
-    if (!buckets[category]) continue;
+    // No recognised kind — OpenTripMap's `kinds` list is broad and includes
+    // many non-visitable classifications (administrative, urban_environment,
+    // etc). Rather than defaulting every unmapped kind to 'attraction' (which
+    // let random low-value POIs into the itinerary), skip it.
+    if (!category || !buckets[category]) continue;
 
     buckets[category].push({
       id:         `otm:${feat.xid ?? feat.osm ?? name}`,
@@ -119,30 +122,41 @@ export async function getVerifiedPlaces(destination) {
     return { ...cached, coords };
   }
 
-  // 3. Provider priority chain
-  const providers = [
-    { name: 'overpass',     fn: () => fetchPlacesFromOverpass(coords.lat, coords.lon) },
-    ...(OTM_KEY ? [{ name: 'opentripmap', fn: () => fetchFromOpenTripMap(coords.lat, coords.lon) }] : []),
-  ];
-
-  for (const provider of providers) {
-    try {
-      const result = await provider.fn();
-      const total  = Object.values(result.buckets).reduce((s, a) => s + a.length, 0);
-      if (total === 0) {
-        log.warn('Provider returned 0 places — trying next', { provider: provider.name, destination });
-        continue;
-      }
-      log.info('Places sourced successfully', { provider: provider.name, destination, total });
-      cityPlaceCache.set(cacheKey, result, PLACE_TTL);
-      return { ...result, coords };
-    } catch (err) {
-      log.warn('Place provider error', { provider: provider.name, destination, error: err.message });
-    }
+  // 3. Race providers instead of trying them strictly in sequence. Overpass
+  // usually has richer, more precise coverage, but when its public instance
+  // is under load even a single endpoint can burn 20+ seconds on retries
+  // before failing over — previously that meant waiting for BOTH Overpass
+  // endpoints to fully exhaust their retry budget before OpenTripMap (which
+  // resolved in under half a second in testing) ever got a chance. Firing
+  // both at once and taking whichever succeeds first bounds worst-case
+  // latency to the FASTER provider's failure, not the sum of every
+  // provider's full retry budget.
+  function wrapProvider(name, fn) {
+    return fn().then(result => {
+      const total = Object.values(result.buckets).reduce((s, a) => s + a.length, 0);
+      if (total === 0) throw new Error(`${name} returned 0 places`);
+      return result;
+    });
   }
 
-  log.warn('All place providers failed — itinerary will use generic fallback items', { destination });
-  return { buckets: EMPTY_BUCKETS(), source: 'fallback', coords };
+  const providerPromises = [
+    wrapProvider('overpass', () => fetchPlacesFromOverpass(coords.lat, coords.lon)),
+    ...(OTM_KEY ? [wrapProvider('opentripmap', () => fetchFromOpenTripMap(coords.lat, coords.lon))] : []),
+  ];
+
+  try {
+    const result = await Promise.any(providerPromises);
+    const total  = Object.values(result.buckets).reduce((s, a) => s + a.length, 0);
+    log.info('Places sourced successfully', { provider: result.source, destination, total });
+    cityPlaceCache.set(cacheKey, result, PLACE_TTL);
+    return { ...result, coords };
+  } catch (aggregateErr) {
+    for (const err of aggregateErr.errors ?? []) {
+      log.warn('Place provider error', { destination, error: err.message });
+    }
+    log.warn('All place providers failed — itinerary will use generic fallback items', { destination });
+    return { buckets: EMPTY_BUCKETS(), source: 'fallback', coords };
+  }
 }
 
 export function getHealthReport() {

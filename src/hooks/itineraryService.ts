@@ -6,8 +6,8 @@ export interface ItineraryItemMetadata {
   place_id?: string | null;
   lat?: number | null;
   lon?: number | null;
-  photo_query?: string | null;
   name_local?: string | null;
+  wikidata?: string | null;
   image_url?: string | null;
   // transport
   duration?: string | null;
@@ -40,7 +40,8 @@ export interface ItineraryItem {
   _name_local?: string | null;
   _lat?: number | null;
   _lon?: number | null;
-  _photo_query?: string | null;
+  _wikidata?: string | null;
+  _image_url?: string | null;
 }
 
 export interface ItineraryDay {

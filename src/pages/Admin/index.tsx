@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   LayoutGrid, Users, Compass, Tag, Settings as SettingsIcon,
-  Send, ShieldAlert, Loader2, ArrowLeft, LogOut, MessageSquare,
+  ShieldAlert, Loader2, ArrowLeft, LogOut, MessageSquare,
 } from "lucide-react";
 import { adminService, type AdminOverview } from "../../hooks/adminService";
 import DashboardScreen from "./DashboardScreen";
@@ -80,8 +80,8 @@ const AdminDashboard: React.FC = () => {
       <aside className="w-16 lg:w-56 shrink-0 bg-[#0d1b3e] flex flex-col sticky top-0 h-screen">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 px-3 lg:px-5 h-16 shrink-0">
-          <div className="bg-[#0ea5e9] p-1.5 rounded-[10px] shrink-0">
-            <Send size={16} className="text-white fill-white rotate-[-15deg] translate-x-[-1px] translate-y-[1px]" />
+          <div className="p-0.5 rounded-[10px] shrink-0">
+            <img src="/icon.png" alt="BalkanExplorer logo" className="w-7 h-7 object-contain" />
           </div>
           <span className="hidden lg:block text-white font-bold text-[15px] tracking-tight">
             BalkanExplorer

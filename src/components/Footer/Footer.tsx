@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, FileText, Send, Loader2 } from "lucide-react";
+import { ArrowRight, FileText, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useDownloadPDF } from "../../hooks/useDownloadPDF";
@@ -57,11 +57,8 @@ const Footer: React.FC = () => {
           {/* Brand */}
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
-              <div className="bg-[#0ea5e9] p-[6px] rounded-[10px] mr-3">
-                <Send
-                  size={20}
-                  className="text-white fill-white rotate-[-15deg] translate-x-[-1px] translate-y-[1px]"
-                />
+              <div className="p-[3px] rounded-[10px] mr-3">
+                <img src="/icon.png" alt="BalkanExplorer logo" className="w-8 h-8 object-contain" />
               </div>
 
               <span

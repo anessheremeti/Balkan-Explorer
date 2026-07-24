@@ -1,7 +1,6 @@
 import { ChevronDown, Star, MapPin, Navigation, Map as MapIcon, Loader2, Compass, Landmark } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../createClient";
-import { useItemPhoto } from "../../hooks/useItemPhoto";
 import { clearPendingTripId } from "../../hooks/usePendingTrip";
 import {
   getLatestTripItinerary,
@@ -147,6 +146,39 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
     poll();
     return () => { cancelled = true; };
   }, [pendingTripId]);
+
+  // ── Self-heal missing photos ──────────────────────────────────────────────
+  // Photos are resolved server-side in the background right after generation
+  // (see resolvePhotosForDays in server/lib/photos.js) and persisted before
+  // the itinerary is marked "ready" — but the in-memory fast-serve path can
+  // still occasionally be read a moment earlier than that. Rather than make
+  // the user manually refresh to see photos land, re-fetch once from
+  // Supabase a few seconds later if any real item is still missing one.
+  const photoRetryRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!trip?.id || itineraryDays.length === 0) return;
+    if (photoRetryRef.current === trip.id) return; // already retried this trip
+
+    const hasUnresolvedRealPlace = itineraryDays.some(day =>
+      day.itinerary_items.some(item => {
+        const isRealPlace = (item.metadata?.lat ?? item._lat) != null;
+        const hasPhoto = !!(item.place?.image_url ?? item.metadata?.image_url ?? item._image_url);
+        return isRealPlace && !hasPhoto;
+      })
+    );
+    if (!hasUnresolvedRealPlace) return;
+
+    photoRetryRef.current = trip.id;
+    const timer = setTimeout(async () => {
+      const res = await getItineraryByTripId(trip.id);
+      if (res.trip) {
+        setTrip(res.trip);
+        setItineraryDays(res.days);
+      }
+    }, 6000);
+
+    return () => clearTimeout(timer);
+  }, [trip?.id, itineraryDays]);
 
   // ── Generating state (AI is building the itinerary) ─────────────────────
   if (generating) {
@@ -300,7 +332,7 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
               <div className="pl-14 space-y-3 animate-in fade-in duration-200">
                 {day.itinerary_items && day.itinerary_items.length > 0 ? (
                   day.itinerary_items.map((item) => (
-                    <ActivityCard key={item.id} item={item} destination={trip?.destination} />
+                    <ActivityCard key={item.id} item={item} />
                   ))
                 ) : (
                   <p className="text-sm text-slate-500 italic">{t('no_activities')}</p>
@@ -316,7 +348,6 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
 
 interface ActivityCardProps {
   item: ItineraryItem;
-  destination?: string;
 }
 
 const TYPE_CONFIG: Record<string, { label: string; badgeClass: string; placeholderBg: string; iconClass: string }> = {
@@ -412,7 +443,7 @@ const BottomMeta: React.FC<{ item: ItineraryItem }> = ({ item }) => {
   return null;
 };
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
+const ActivityCard: React.FC<ActivityCardProps> = ({ item }) => {
   const config = TYPE_CONFIG[item.item_type.toLowerCase()] ?? {
     label: item.item_type,
     badgeClass: "text-slate-400",
@@ -420,34 +451,20 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item, destination }) => {
     iconClass: "text-slate-300",
   };
 
-  const staticUrl = item.place?.image_url ?? item.metadata?.image_url;
-  // Use the pre-built contextual query from metadata if present (set at generation
-  // time, e.g. "Star cafe Ulcinj Montenegro"). For legacy items without it, the
-  // hook merges title + destination itself at Level 1.
-  const photoTitle = (item.metadata?.photo_query ?? item._photo_query) ?? item.title;
-  const hasQueryContext = !!(item.metadata?.photo_query ?? item._photo_query);
-  // Real-world coordinates — present in metadata (Supabase path) or as _-prefixed
-  // fields (in-memory fast-serve path). Needed for Google Places photo lookup.
-  const lat = item.metadata?.lat ?? item._lat;
-  const lon = item.metadata?.lon ?? item._lon;
+  // Photos are resolved once, server-side, right after itinerary generation
+  // (see resolvePhotosForDays in server/lib/photos.js) — never fetched lazily
+  // here. `metadata.image_url` covers the persisted (Supabase) path;
+  // `_image_url` covers the in-memory fast-serve path used right after a
+  // trip is created, before the background resolution job has finished (in
+  // which case it's simply not there yet and the icon below shows instead).
+  const imageUrl = item.place?.image_url ?? item.metadata?.image_url ?? item._image_url ?? null;
   // Local-language name stored alongside the English-preferred title
   const nameLocal = item.metadata?.name_local ?? item._name_local ?? null;
-  const { url: fetchedUrl, loading: photoLoading } = useItemPhoto(photoTitle, {
-    fallback: hasQueryContext ? undefined : destination,
-    itemType: item.item_type,
-    enabled: !staticUrl,
-    lat,
-    lon,
-    placeName: item.title,
-  });
-  const imageUrl = staticUrl ?? fetchedUrl;
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl overflow-hidden flex shadow-sm hover:shadow-md transition-shadow duration-200">
       {/* Thumbnail */}
       <div className="relative w-24 sm:w-36 md:w-40 shrink-0 min-h-27">
-        {photoLoading ? (
-          <div className={`w-full h-full absolute inset-0 animate-pulse ${config.placeholderBg}`} />
-        ) : imageUrl ? (
+        {imageUrl ? (
           <img
             src={imageUrl}
             alt={item.title}

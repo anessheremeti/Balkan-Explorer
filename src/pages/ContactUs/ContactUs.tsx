@@ -78,7 +78,7 @@ const ContactPage: React.FC = () => {
                       <p className={`text-sm font-bold ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                         {t('contact_email_label')}
                       </p>
-                      <p className="text-sm text-slate-500">hello@balkanexplorer.com</p>
+                      <p className="text-sm text-slate-500">balkan_explorer@outlook.com</p>
                     </div>
                   </div>
 
@@ -90,7 +90,7 @@ const ContactPage: React.FC = () => {
                       <p className={`text-sm font-bold ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                         {t('contact_phone_label')}
                       </p>
-                      <p className="text-sm text-slate-500">+383 49 123 456</p>
+                      <p className="text-sm text-slate-500">+383 043 799 336</p>
                     </div>
                   </div>
 
