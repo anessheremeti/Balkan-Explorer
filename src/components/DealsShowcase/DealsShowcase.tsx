@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Tag, Building2, CalendarClock, Flame, ImageOff, X, Loader2, CheckCircle2, Wand2, Heart } from "lucide-react";
+import { Tag, Building2, CalendarClock, Flame, ImageOff, X, Loader2, CheckCircle2, Wand2, Heart, MessageCircle } from "lucide-react";
 import posthog from "posthog-js";
 import { API_BASE } from "../../constants/api";
 import { findDestinationOption } from "../../constants/allowedDestinations";
@@ -16,6 +16,23 @@ interface Deal {
   agency: string | null;
   valid_until: string | null;
   image_url: string | null;
+  whatsapp: string | null;
+}
+
+// Opens WhatsApp click-to-chat with a message that already identifies the
+// app and the specific deal — this is how the agency knows a WhatsApp
+// conversation came from here rather than some other channel, without any
+// tracking pixel or redirect needed. Logs a click (fire-and-forget) so the
+// admin dashboard can show how many leads each deal/agency generated.
+function contactOnWhatsApp(deal: Deal) {
+  if (!deal.whatsapp) return;
+  const message = `Përshëndetje! Jam i interesuar për ofertën "${deal.title}" (${deal.city}, ${deal.country}) që pashë në BalkanExplorer.`;
+  const url = `https://wa.me/${deal.whatsapp}?text=${encodeURIComponent(message)}`;
+
+  posthog.capture("deal_whatsapp_click", { deal_id: deal.id, city: deal.city });
+  fetch(`${API_BASE}/api/deals/${deal.id}/whatsapp-click`, { method: "POST" }).catch(() => {});
+
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 interface DealsShowcaseProps {
@@ -164,6 +181,15 @@ const DealsShowcase: React.FC<DealsShowcaseProps> = ({ isDark, country }) => {
                   Plan this trip
                 </button>
               </div>
+              {d.whatsapp && (
+                <button
+                  onClick={() => contactOnWhatsApp(d)}
+                  className="flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#1ebe57] text-white text-[13px] font-semibold py-2 rounded-xl transition mt-2"
+                >
+                  <MessageCircle size={13} />
+                  Contact on WhatsApp
+                </button>
+              )}
             </div>
           </article>
         ))}

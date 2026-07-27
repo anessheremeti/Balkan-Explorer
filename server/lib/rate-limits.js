@@ -46,6 +46,17 @@ export const inquiryLimiter = rateLimit({
   handler: json429('Too many inquiries — try again in an hour.'),
 });
 
+// POST /api/deals/:id/whatsapp-click
+// Just increments a counter — cheap and harmless, but still capped against a
+// scripted spam loop. 20/min per IP is generous for genuine browsing.
+export const dealClickLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: json429('Too many requests — slow down.'),
+});
+
 // GET /api/geocode
 // Replaces the hand-rolled rateOk() map. 30/min per IP with 24 h cache
 // means a real user will almost never hit this after the first load.

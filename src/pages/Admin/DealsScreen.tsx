@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Plus, Trash2, Loader2, Tag, CalendarClock, Building2, ImagePlus, X } from "lucide-react";
+import { Plus, Trash2, Loader2, Tag, CalendarClock, Building2, ImagePlus, X, MessageCircle } from "lucide-react";
 import { ALLOWED_COUNTRIES } from "../../constants/allowedDestinations";
 import { adminService, type Deal, type NewDeal } from "../../hooks/adminService";
 import { useToastContext } from "../../context/ToastContext";
@@ -145,10 +145,16 @@ const DealsScreen: React.FC = () => {
               <input type="date" value={validUntil} min={today} onChange={e => setValidUntil(e.target.value)} className={inputCls} />
               <p className="text-[11px] text-slate-400 mt-1">Deals past this date stop showing on the public site.</p>
             </div>
-            <div className="sm:col-span-2">
+            <div>
               <label className={labelCls}>Agency</label>
               <input value={form.agency ?? ""} onChange={e => set({ agency: e.target.value })}
                 placeholder="Balkan Travel Agency" maxLength={80} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Agency WhatsApp</label>
+              <input value={form.whatsapp ?? ""} onChange={e => set({ whatsapp: e.target.value })}
+                placeholder="+383 44 123 456" maxLength={30} className={inputCls} />
+              <p className="text-[11px] text-slate-400 mt-1">Shown as a "Contact on WhatsApp" button on the public site.</p>
             </div>
             <div className="sm:col-span-2">
               <label className={labelCls}>Description</label>
@@ -237,6 +243,12 @@ const DealsScreen: React.FC = () => {
                           <span className="flex items-center gap-1">
                             <CalendarClock size={11} />
                             until {new Date(d.valid_until).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        )}
+                        {d.whatsapp && (
+                          <span className="flex items-center gap-1 font-semibold text-emerald-600">
+                            <MessageCircle size={11} />
+                            {d.whatsapp_clicks} WhatsApp click{d.whatsapp_clicks === 1 ? "" : "s"}
                           </span>
                         )}
                       </div>

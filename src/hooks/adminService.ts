@@ -43,6 +43,9 @@ export interface Deal {
   image_url: string | null;
   active: boolean;
   created_at: string;
+  /** Digits only (e.g. "38344123456") — ready to use in a wa.me link */
+  whatsapp: string | null;
+  whatsapp_clicks: number;
 }
 
 export interface NewDeal {
@@ -56,6 +59,8 @@ export interface NewDeal {
   valid_until?: string;
   /** Image as a data URL (PNG/JPEG/WebP, ≤ 2.5 MB) — uploaded to Storage server-side */
   photo?: string;
+  /** Agency's WhatsApp number, any format — normalized server-side to digits only */
+  whatsapp?: string;
 }
 
 export interface NewUser {

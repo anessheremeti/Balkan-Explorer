@@ -11,7 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 import { log }                                    from './lib/logger.js';
-import { tripCreateLimiter, statusPollLimiter, guestMigrateLimiter, geocodeLimiter, inquiryLimiter } from './lib/rate-limits.js';
+import { tripCreateLimiter, statusPollLimiter, guestMigrateLimiter, geocodeLimiter, inquiryLimiter, dealClickLimiter } from './lib/rate-limits.js';
 import { tripCache, photoCache, proxyGeoCache }   from './lib/cache.js';
 import { getVerifiedPlaces, getHealthReport }     from './lib/place-orchestrator.js';
 import { assembleItinerary, assembleMultiCityItinerary } from './lib/itinerary-assembler.js';
@@ -638,7 +638,7 @@ async function uploadDealPhoto(dataUrl) {
 }
 
 app.post('/api/admin/deals', requireAdmin, async (req, res) => {
-  const { city, country, title, description, price, currency, agency, valid_until, photo } = req.body ?? {};
+  const { city, country, title, description, price, currency, agency, valid_until, photo, whatsapp } = req.body ?? {};
   if (!city?.trim() || !country?.trim() || !title?.trim()) {
     return res.status(400).json({ error: 'city, country and title are required' });
   }
@@ -667,6 +667,10 @@ app.post('/api/admin/deals', requireAdmin, async (req, res) => {
         agency: agency?.trim() || null,
         valid_until: valid_until || null,
         image_url,
+        // Digits only (+ optional leading '+') — wa.me links need a bare
+        // digit string; stripping formatting here means every consumer of
+        // this field (the public WhatsApp button) can trust it's ready to use.
+        whatsapp: whatsapp?.trim() ? whatsapp.trim().replace(/[^\d+]/g, '') : null,
       }])
       .select()
       .single();
@@ -675,6 +679,23 @@ app.post('/api/admin/deals', requireAdmin, async (req, res) => {
     res.status(201).json({ success: true, deal: data });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Public — fired when a visitor clicks "Contact on WhatsApp" for a deal.
+// No lead data (the visitor never filled a form — that's the point of a
+// direct WhatsApp handoff), just a counter so admins can see how many
+// clicks each deal/agency is generating.
+app.post('/api/deals/:id/whatsapp-click', dealClickLimiter, async (req, res) => {
+  const { id } = req.params;
+  if (!UUID_RE.test(id)) return res.status(400).json({ error: 'Invalid deal id' });
+  try {
+    const { error } = await supabase.rpc('increment_whatsapp_clicks', { deal_id: id });
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    log.warn('WhatsApp click log failed', { dealId: id, error: err.message });
+    res.status(500).json({ error: 'Could not log click' });
   }
 });
 
