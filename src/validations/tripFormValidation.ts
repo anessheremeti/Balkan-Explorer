@@ -56,20 +56,7 @@ function isSameCityFuzzy(inputCity: string, knownCity: string): boolean {
 
 // ─── Country resolution ───────────────────────────────────────────────────────
 
-// Layer 1 — resolve a typed location's country from the curated dataset (offline).
-// Catches known cities with or without a ", Country" suffix, including misspellings
-// and missing diacritics ("Klina", "Kukes", "Peje" …).
-function resolveCountryLocally(input: string): string | null {
-  const city = input.split(",")[0].trim();
-  const norm = normCity(input);
-  for (const { country, cities } of BALKAN_DESTINATIONS) {
-    if (norm.includes(normCity(country))) return country;
-    if (cities.some(c => isSameCityFuzzy(city, c))) return country;
-  }
-  return null;
-}
-
-// Layer 2 — resolve unknown places (villages, small towns) by geocoding.
+// Resolve unknown places (villages, small towns) by geocoding.
 // Four outcomes, deliberately distinct:
 //   in_dest_country → the place exists inside the destination country → rule broken
 //   elsewhere       → exists in another country → fine
@@ -161,16 +148,6 @@ async function validateLocationPair(
     return { destination: "Your starting location appears to be the same city as your destination." };
   }
 
- // const sameCountryError = `"${startingLocation}" is in ${destCountry} — your starting location must be in a different country than your destination.`;
-
-  // Layer 1: offline dataset — catches "Klina", "Kukes", "Peje" typed without a country.
-  const localCountry = resolveCountryLocally(startingLocation);
-  /*if (localCountry) {
-    return normCity(localCountry) === normCity(destCountry)
-      ? { destination: sameCountryError }
-      : {};
-  }
-*/
   // Layer 2: unknown place (village, small town) — geocode it, scoped to the
   // destination country first (see GeocodeResult).
   const destCode = BALKAN_DESTINATIONS.find(

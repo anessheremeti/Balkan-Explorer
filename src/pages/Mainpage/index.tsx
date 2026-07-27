@@ -89,7 +89,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   // Budget may be pre-filled by a deal's "Plan this trip" (min 500 enforced)
   const [budget_total, setBudget_total] = useState<string>(() => {
     const stored = Number(localStorage.getItem("selectedBudget"));
-    return Number.isFinite(stored) && stored >= 500 ? stored : 500;
+    return String(Number.isFinite(stored) && stored >= 500 ? stored : 500);
   });
   const [currency, setCurrency] = useState<Currency>("USD");
 
@@ -164,7 +164,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
         returning_date,
         travelers,
         travel_style,
-        budget_total,
+        budget_total: Number(budget_total),
         currency,
       };
 
