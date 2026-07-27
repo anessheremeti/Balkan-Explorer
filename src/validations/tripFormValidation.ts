@@ -224,7 +224,7 @@ export async function validateTripForm(values: TripFormValues): Promise<TripForm
     errors.returning_date = "This travel style supports a maximum of 31 days.";
   }
 const regex = /^(0|[1-9]\d*)$/;
-  if (!budget_total ||  !(regex.test(budget_total)) || budget_total < '500' ) {
+  if (!budget_total || !(regex.test(budget_total)) || Number(budget_total) < 500) {
     errors.budget_total = "Budget should be at least $500";
   }
 
