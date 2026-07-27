@@ -274,15 +274,18 @@ The frontend and backend must be deployed to **separate hosts** — the Express 
 4. Set `VITE_API_URL` to your deployed backend URL
 5. Trigger a redeploy after setting env vars (they are baked in at build time)
 
-### Backend → Railway (recommended)
+### Backend → Render (recommended)
 
-1. Create a new Railway project → **Deploy from GitHub repo**
-2. Set **Root directory** to `server`
-3. Add all variables from `server/.env.example` in Railway's **Variables** tab
-4. Set `FRONTEND_URL` to your Netlify site URL so CORS allows the origin
-5. Railway will give you a public URL — paste it into `VITE_API_URL` in Netlify
+A `render.yaml` blueprint is included at the repo root.
 
-Alternative free hosts: [Render](https://render.com), [Fly.io](https://fly.io).
+1. In the Render dashboard: **New → Blueprint** → connect this GitHub repo → Render reads `render.yaml` and creates the `travel-explorer-api` web service
+2. Add all variables from `server/.env.example` in the service's **Environment** tab
+3. Set `FRONTEND_URL` to your Netlify site URL so CORS allows the origin
+4. Render will give you a public URL (`https://travel-explorer-api.onrender.com`-style) — paste it into `VITE_API_URL` in Netlify
+
+Without the blueprint: **New → Web Service** → root directory `server`, build command `npm install`, start command `node server.js`.
+
+Alternative free hosts: [Railway](https://railway.app), [Fly.io](https://fly.io).
 
 ---
 

@@ -156,6 +156,12 @@ const DealsScreen: React.FC = () => {
                 placeholder="+383 44 123 456" maxLength={30} className={inputCls} />
               <p className="text-[11px] text-slate-400 mt-1">Shown as a "Contact on WhatsApp" button on the public site.</p>
             </div>
+            <div>
+              <label className={labelCls}>Agency email</label>
+              <input type="email" value={form.agency_email ?? ""} onChange={e => set({ agency_email: e.target.value })}
+                placeholder="leads@agency.com" maxLength={120} className={inputCls} />
+              <p className="text-[11px] text-slate-400 mt-1">Receives an email the moment a visitor submits an inquiry for this deal.</p>
+            </div>
             <div className="sm:col-span-2">
               <label className={labelCls}>Description</label>
               <textarea value={form.description ?? ""} onChange={e => set({ description: e.target.value })}

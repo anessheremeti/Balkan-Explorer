@@ -39,6 +39,7 @@ export interface Deal {
   price: number | null;
   currency: string;
   agency: string | null;
+  agency_email: string | null;
   valid_until: string | null;
   image_url: string | null;
   active: boolean;
@@ -56,6 +57,8 @@ export interface NewDeal {
   price?: number;
   currency?: string;
   agency?: string;
+  /** Where new-lead notification emails are sent when a visitor inquires */
+  agency_email?: string;
   valid_until?: string;
   /** Image as a data URL (PNG/JPEG/WebP, ≤ 2.5 MB) — uploaded to Storage server-side */
   photo?: string;

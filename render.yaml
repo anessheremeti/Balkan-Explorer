@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: travel-explorer-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    autoDeploy: true

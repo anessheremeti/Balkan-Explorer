@@ -19,6 +19,7 @@ import { generateAIThemes, deterministicThemes, aiModelHealth } from './lib/ai-t
 import { resolvePhotosForDays }                   from './lib/photos.js';
 import { mapWithConcurrency }                     from './lib/concurrency.js';
 import { geocodeCity }                            from './lib/providers/nominatim.js';
+import { sendInquiryEmail }                       from './lib/email.js';
 
 // ─── Startup validation ───────────────────────────────────────────────────────
 // Accept both SUPABASE_URL (preferred, server-only) and the legacy
@@ -30,7 +31,7 @@ const REQUIRED = { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: SUPABASE_KEY };
 const missing  = Object.entries(REQUIRED).filter(([, v]) => !v).map(([k]) => k);
 if (missing.length) {
   console.error(`[server] Missing required environment variables: ${missing.join(', ')}`);
-  console.error('[server] Set them in Railway → Variables (production) or server/.env (local).');
+  console.error('[server] Set them in Render → Environment (production) or server/.env (local).');
   process.exit(1);
 }
 
@@ -638,7 +639,7 @@ async function uploadDealPhoto(dataUrl) {
 }
 
 app.post('/api/admin/deals', requireAdmin, async (req, res) => {
-  const { city, country, title, description, price, currency, agency, valid_until, photo, whatsapp } = req.body ?? {};
+  const { city, country, title, description, price, currency, agency, agency_email, valid_until, photo, whatsapp } = req.body ?? {};
   if (!city?.trim() || !country?.trim() || !title?.trim()) {
     return res.status(400).json({ error: 'city, country and title are required' });
   }
@@ -665,6 +666,7 @@ app.post('/api/admin/deals', requireAdmin, async (req, res) => {
         price: price ?? null,
         currency: currency || 'EUR',
         agency: agency?.trim() || null,
+        agency_email: agency_email?.trim() || null,
         valid_until: valid_until || null,
         image_url,
         // Digits only (+ optional leading '+') — wa.me links need a bare
@@ -728,7 +730,7 @@ app.post('/api/deals/:id/inquire', inquiryLimiter, async (req, res) => {
   try {
     // The deal must exist and not be expired
     const { data: deal } = await supabase
-      .from('destination_deals').select('id, title, valid_until').eq('id', id).maybeSingle();
+      .from('destination_deals').select('id, title, price, currency, valid_until, agency_email').eq('id', id).maybeSingle();
     if (!deal) return res.status(404).json({ error: 'Deal not found' });
     if (deal.valid_until && deal.valid_until < new Date().toISOString().split('T')[0]) {
       return res.status(410).json({ error: 'This deal has expired' });
@@ -750,6 +752,12 @@ app.post('/api/deals/:id/inquire', inquiryLimiter, async (req, res) => {
 
     log.info('Deal inquiry received', { dealId: id, email: record.email });
     res.status(201).json({ success: true });
+
+    // Fire-and-forget: the lead is already saved above, so a slow or failed
+    // email must never delay/break the response the visitor is waiting on.
+    sendInquiryEmail({ deal, inquiry: record }).catch(err =>
+      log.warn('Inquiry email dispatch failed', { dealId: id, error: err.message })
+    );
   } catch (err) {
     log.error('Inquiry failed', { dealId: id, error: err.message });
     res.status(500).json({ error: 'Could not submit inquiry — please try again' });
