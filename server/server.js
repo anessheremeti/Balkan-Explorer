@@ -17,6 +17,7 @@ import { getVerifiedPlaces, getHealthReport }     from './lib/place-orchestrator
 import { assembleItinerary, assembleMultiCityItinerary } from './lib/itinerary-assembler.js';
 import { generateAIThemes, deterministicThemes, aiModelHealth } from './lib/ai-themes.js';
 import { resolvePhotosForDays }                   from './lib/photos.js';
+import { enrichOpenTripMapDetails }               from './lib/enrich-places.js';
 import { mapWithConcurrency }                     from './lib/concurrency.js';
 import { geocodeCity }                            from './lib/providers/nominatim.js';
 import { sendInquiryEmail }                       from './lib/email.js';
@@ -123,17 +124,26 @@ async function persistItinerary(tripId, days) {
   // Remove _prefixed in-memory fields; map them into the metadata jsonb column.
   const daysToInsert  = days.map(({ itinerary_items: _, ...day }) => day);
   const itemsToInsert = days.flatMap(d =>
-    d.itinerary_items.map(({ _source, _place_id, _lat, _lon, _name_local, _wikidata, _image_url, ...item }) => ({
+    d.itinerary_items.map(({
+      _source, _place_id, _lat, _lon, _name_local, _wikidata, _image_url,
+      _website, _phone, _opening_hours, _address, _rating, _cuisine, ...item
+    }) => ({
       ...item,
       place_id: null,
       metadata: {
-        source:     _source     ?? 'unknown',
-        place_id:   _place_id   ?? null,
-        lat:        _lat        ?? null,
-        lon:        _lon        ?? null,
-        name_local: _name_local ?? null,
-        wikidata:   _wikidata   ?? null,
-        image_url:  _image_url  ?? null,
+        source:        _source        ?? 'unknown',
+        place_id:      _place_id      ?? null,
+        lat:           _lat           ?? null,
+        lon:           _lon           ?? null,
+        name_local:    _name_local    ?? null,
+        wikidata:      _wikidata      ?? null,
+        image_url:     _image_url     ?? null,
+        website:       _website       ?? null,
+        phone:         _phone         ?? null,
+        opening_hours: _opening_hours ?? null,
+        address:       _address       ?? null,
+        rating:        _rating        ?? null,
+        cuisine:       _cuisine       ?? null,
       },
     }))
   );
@@ -214,13 +224,16 @@ async function generateAndSaveItinerary(tripId, tripData) {
   // already responded by this point); `payload` is mutated in place, so the
   // tripCache entry set above picks up the resolved URLs automatically
   // (same object reference) for anyone still on the fast-serve path.
-  resolvePhotosForDays(payload.days, destination)
-    .catch(err => log.warn('Photo resolution failed', { tripId, error: err.message }))
-    .finally(() => {
-      persistItinerary(tripId, payload.days).catch(err =>
-        log.error('Persist failed', { tripId, error: err.message })
-      );
-    });
+  Promise.all([
+    resolvePhotosForDays(payload.days, destination)
+      .catch(err => log.warn('Photo resolution failed', { tripId, error: err.message })),
+    enrichOpenTripMapDetails(payload.days)
+      .catch(err => log.warn('Place detail enrichment failed', { tripId, error: err.message })),
+  ]).finally(() => {
+    persistItinerary(tripId, payload.days).catch(err =>
+      log.error('Persist failed', { tripId, error: err.message })
+    );
+  });
 }
 
 // ─── Routes: Trip creation ────────────────────────────────────────────────────

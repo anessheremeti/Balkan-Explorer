@@ -4,11 +4,16 @@ import { resolveName } from '../name-utils.js';
 
 const UA = 'TravelExplorer/1.0 (open-source travel planner)';
 
-// Two public endpoints tried in order; each has its own circuit breaker.
+// Three public mirrors, raced concurrently (not tried in sequence — see
+// fetchPlacesFromOverpass); each has its own circuit breaker. A third mirror
+// widens the odds that at least one is healthy when the main instance is
+// under load (observed both overpass-api.de and kumi failing simultaneously).
 const ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter',
 ];
+const ENDPOINT_LABELS = ['main', 'kumi', 'osm.ch'];
 
 const breakers = ENDPOINTS.map(
   (_, i) => new CircuitBreaker(`overpass-${i}`, { threshold: 3, timeout: 120_000 })
@@ -74,7 +79,10 @@ function buildQuery(south, west, north, east) {
     `  node["historic"]["name"](${b});`,
     `  way["historic"]["name"](${b});`,
     ');',
-    'out center qt 300;',
+    // No `qt` (quadtile) sort — it costs the server extra work purely for a
+    // deterministic ordering we don't need (buildDaysForBuckets shuffles
+    // everything itself with its own seeded order anyway).
+    'out center 300;',
   ];
 
   return lines.join('\n');
@@ -130,6 +138,16 @@ async function queryWithRetry(endpoint, breaker, query) {
       }
     }
   });
+}
+
+// Real, verified address built only from actual OSM addr:* tags — never
+// inferred or guessed. Absent entirely when the mapper didn't tag one.
+function buildAddress(tags) {
+  const street = tags['addr:housenumber'] && tags['addr:street']
+    ? `${tags['addr:street']} ${tags['addr:housenumber']}`
+    : tags['addr:street'] ?? null;
+  const parts = [street, tags['addr:city']].filter(Boolean);
+  return parts.length ? parts.join(', ') : null;
 }
 
 function parseElements(elements) {
@@ -195,6 +213,7 @@ function parseElements(elements) {
       website:        tags.website        ?? null,
       phone:          tags.phone          ?? null,
       opening_hours:  tags.opening_hours  ?? null,
+      address:        buildAddress(tags),
       // Cross-reference to the Wikidata entity, when the OSM mapper linked one.
       // Lets the photo pipeline fetch the exact, unambiguous image (P18 claim)
       // for this specific place instead of a fuzzy name/keyword match.
@@ -211,35 +230,54 @@ export async function fetchPlacesFromOverpass(lat, lon) {
   const R     = 0.03; // ≈ 3 km bounding box half-side
   const query = buildQuery(lat - R, lon - R, lat + R, lon + R);
 
-  for (let i = 0; i < ENDPOINTS.length; i++) {
-    const endpoint = ENDPOINTS[i];
-    const breaker  = breakers[i];
-
-    if (!breaker.isAvailable) {
+  // Race every healthy mirror concurrently instead of trying them one after
+  // another. Sequential trial meant a slow-but-not-yet-circuit-open main
+  // instance fully burned its ~25s retry budget before kumi ever got a
+  // chance — under real load we saw BOTH endpoints fail back-to-back,
+  // taking 40s+ total before falling through to OpenTripMap. Racing bounds
+  // the wait to whichever mirror is fastest right now.
+  const attempts = ENDPOINTS
+    .map((endpoint, i) => ({ endpoint, i, breaker: breakers[i] }))
+    .filter(({ breaker, i }) => {
+      if (breaker.isAvailable) return true;
       log.info('Overpass endpoint circuit-open — skipping', { index: i });
-      continue;
-    }
-
-    try {
+      return false;
+    })
+    .map(({ endpoint, i, breaker }) => (async () => {
       const t0       = Date.now();
       const elements = await queryWithRetry(endpoint, breaker, query);
       const buckets  = parseElements(elements);
       const total    = Object.values(buckets).reduce((s, a) => s + a.length, 0);
 
       log.info('Overpass places fetched', {
-        endpoint: i === 0 ? 'main' : 'kumi',
+        endpoint:  ENDPOINT_LABELS[i],
         elements:  elements.length,
         places:    total,
         latencyMs: Date.now() - t0,
       });
 
-      return { buckets, source: 'overpass', endpoint: i === 0 ? 'main' : 'kumi' };
-    } catch (err) {
-      log.warn('Overpass endpoint failed', { index: i, error: err.message });
-    }
-  }
+      // A mirror can respond fast with a stale/incomplete replica (0 results)
+      // while a slower-but-correct mirror is still mid-flight — Promise.any
+      // only cares about "no error", so an empty-but-quick reply would win
+      // the race over real data arriving a second later. Treat 0 results as
+      // a failure too, so the race keeps going until one mirror actually has
+      // data (or all of them come back empty, which then correctly falls
+      // through to OpenTripMap/fallback instead of a false-empty result).
+      if (total === 0) throw new Error(`${ENDPOINT_LABELS[i]} returned 0 places`);
 
-  throw new Error('All Overpass endpoints failed or circuit-open');
+      return { buckets, source: 'overpass', endpoint: ENDPOINT_LABELS[i] };
+    })());
+
+  if (!attempts.length) throw new Error('All Overpass endpoints circuit-open');
+
+  try {
+    return await Promise.any(attempts);
+  } catch (aggregateErr) {
+    for (const err of aggregateErr.errors ?? []) {
+      log.warn('Overpass endpoint failed', { error: err.message });
+    }
+    throw new Error('All Overpass endpoints failed or circuit-open');
+  }
 }
 
 export function overpassHealth() {

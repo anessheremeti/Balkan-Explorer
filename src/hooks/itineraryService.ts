@@ -17,6 +17,13 @@ export interface ItineraryItemMetadata {
   review_count?: number | null;
   distance_from?: string | null;
   price_level?: string | null;
+  // Real, verified details sourced directly from OSM/OpenTripMap — null when
+  // the source place simply has no such tag (never inferred or guessed).
+  website?: string | null;
+  phone?: string | null;
+  opening_hours?: string | null;
+  address?: string | null;
+  cuisine?: string | null;
   [key: string]: unknown;
 }
 
@@ -42,6 +49,12 @@ export interface ItineraryItem {
   _lon?: number | null;
   _wikidata?: string | null;
   _image_url?: string | null;
+  _website?: string | null;
+  _phone?: string | null;
+  _opening_hours?: string | null;
+  _address?: string | null;
+  _rating?: number | null;
+  _cuisine?: string | null;
 }
 
 export interface ItineraryDay {

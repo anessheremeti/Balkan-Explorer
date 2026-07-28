@@ -1,4 +1,4 @@
-import { ChevronDown, Star, MapPin, Navigation, Map as MapIcon, Loader2, Compass, Landmark } from "lucide-react";
+import { ChevronDown, Star, MapPin, Navigation, Map as MapIcon, Loader2, Compass, Landmark, Clock, Globe, Phone, UtensilsCrossed } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../createClient";
 import { clearPendingTripId } from "../../hooks/usePendingTrip";
@@ -443,6 +443,63 @@ const BottomMeta: React.FC<{ item: ItineraryItem }> = ({ item }) => {
   return null;
 };
 
+// Real, verified details sourced directly from OSM/OpenTripMap (never
+// AI-generated) — shown only when the source place actually has that tag.
+// Covers both the persisted path (item.metadata) and the in-memory
+// fast-serve path (item._prefixed) used right after a trip is created.
+const RealPlaceDetails: React.FC<{ item: ItineraryItem }> = ({ item }) => {
+  const rating        = item.metadata?.rating ?? item._rating ?? null;
+  const cuisine       = item.metadata?.cuisine ?? item._cuisine ?? null;
+  const openingHours  = item.metadata?.opening_hours ?? item._opening_hours ?? null;
+  const address       = item.metadata?.address ?? item._address ?? null;
+  const website       = item.metadata?.website ?? item._website ?? null;
+  const phone         = item.metadata?.phone ?? item._phone ?? null;
+
+  if (!rating && !cuisine && !openingHours && !address && !website && !phone) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11.5px] text-slate-500 dark:text-slate-400">
+      {rating && (
+        <span className="flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
+          <Star size={11} className="text-amber-400 fill-amber-400" />
+          {rating}
+        </span>
+      )}
+      {cuisine && (
+        <span className="flex items-center gap-1">
+          <UtensilsCrossed size={11} />
+          {cuisine}
+        </span>
+      )}
+      {openingHours && (
+        <span className="flex items-center gap-1" title="Opening hours (OpenStreetMap)">
+          <Clock size={11} />
+          {openingHours}
+        </span>
+      )}
+      {address && (
+        <span className="flex items-center gap-1">
+          <MapPin size={11} className="text-red-400" />
+          {address}
+        </span>
+      )}
+      {phone && (
+        <a href={`tel:${phone}`} className="flex items-center gap-1 hover:text-sky-500" onClick={e => e.stopPropagation()}>
+          <Phone size={11} />
+          {phone}
+        </a>
+      )}
+      {website && (
+        <a href={website} target="_blank" rel="noopener noreferrer"
+           className="flex items-center gap-1 hover:text-sky-500" onClick={e => e.stopPropagation()}>
+          <Globe size={11} />
+          Website
+        </a>
+      )}
+    </div>
+  );
+};
+
 const ActivityCard: React.FC<ActivityCardProps> = ({ item }) => {
   const config = TYPE_CONFIG[item.item_type.toLowerCase()] ?? {
     label: item.item_type,
@@ -508,6 +565,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ item }) => {
           <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed line-clamp-2">
             {item.description}
           </p>
+          <RealPlaceDetails item={item} />
         </div>
         <BottomMeta item={item} />
       </div>

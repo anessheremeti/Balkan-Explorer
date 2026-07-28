@@ -16,9 +16,16 @@ const SLOT_CATEGORIES = {
 // OSM `cuisine` values are raw, semicolon-separated tag tokens (e.g.
 // "coffee_shop;burger;sandwich;chicken;ice_cream") meant for machine
 // filtering, not display. Humanize to "coffee shop, burger, sandwich".
+// Title-cases each word ("coffee_shop" -> "Coffee Shop") so cuisine reads
+// consistently with the other real-detail fields (address, source names),
+// which all arrive already Proper Cased.
+function titleCase(s) {
+  return s.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1));
+}
+
 function humanizeCuisine(raw) {
   if (!raw) return null;
-  const words = raw.split(';').map(w => w.trim().replace(/_/g, ' ')).filter(Boolean);
+  const words = raw.split(';').map(w => titleCase(w.trim().replace(/_/g, ' '))).filter(Boolean);
   return words.slice(0, 3).join(', ') || null;
 }
 
@@ -104,6 +111,15 @@ function buildItem(place, time, dayId) {
     _name_local: place.name_local ?? null,
     _wikidata:   place.wikidata ?? null,
     _image_url:  null,
+    // Real, verified details straight from OSM/OpenTripMap tags — never
+    // AI-generated or inferred. Absent (null) when the source simply has no
+    // such tag for that place, rather than guessing.
+    _website:       place.website ?? null,
+    _phone:         place.phone ?? null,
+    _opening_hours: place.opening_hours ?? null,
+    _address:       place.address ?? null,
+    _rating:        place.rating ?? null,
+    _cuisine:       humanizeCuisine(place.cuisine),
   };
 }
 

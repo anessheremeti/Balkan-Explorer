@@ -204,6 +204,20 @@ const DealsShowcase: React.FC<DealsShowcaseProps> = ({ isDark, country }) => {
 
 // ─── Inquiry modal ────────────────────────────────────────────────────────────
 
+// Same shape the server enforces (server/server.js EMAIL_RE) — validating the
+// same rule client-side gives instant feedback instead of a round-trip.
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// Digits, spaces and the punctuation real phone numbers use — permissive on
+// format (country codes, brackets, dashes) but rejects letters outright.
+const PHONE_CHARS_REGEX = /^[\d\s+\-()]*$/;
+const PHONE_DIGITS_MIN = 6;
+
+interface InquiryFieldErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+}
+
 const InquiryModal: React.FC<{ deal: Deal; isDark: boolean; onClose: () => void }> = ({ deal, isDark, onClose }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState(sessionEmail());
@@ -212,20 +226,43 @@ const InquiryModal: React.FC<{ deal: Deal; isDark: boolean; onClose: () => void 
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const nameHandler = (e:React.ChangeEvent<HTMLInputElement>) => {
-    if(e.target.value === '' || LOCATION_INPUT_REGEX.test(e.target.value)){
-      setName(e.target.value)
+  const [fieldErrors, setFieldErrors] = useState<InquiryFieldErrors>({});
+
+  const nameHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value === '' || LOCATION_INPUT_REGEX.test(e.target.value)) {
+      setName(e.target.value);
     }
-  }
-    const emailHandler = (e:React.ChangeEvent<HTMLInputElement>) => {
-    if(e.target.value === '' || LOCATION_INPUT_REGEX.test(e.target.value)){
-      setEmail(e.target.value)
+  };
+  // Email needs digits and "@" — letting anything through while typing and
+  // validating shape (EMAIL_REGEX) on submit is the right split: no keystroke
+  // should ever feel "rejected" for characters a real email legitimately has.
+  const emailHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+  };
+  // Phone: filter out letters as they're typed (no valid phone has them),
+  // but don't force a rigid mask — international formats vary too much.
+  const phoneHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (PHONE_CHARS_REGEX.test(e.target.value)) {
+      setPhone(e.target.value);
     }
-  }
+  };
+
+  const validate = (): InquiryFieldErrors => {
+    const errors: InquiryFieldErrors = {};
+    if (!name.trim()) errors.name = "Your name is required";
+    if (!EMAIL_REGEX.test(email.trim())) errors.email = "Enter a valid email address";
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phone && phoneDigits.length < PHONE_DIGITS_MIN) errors.phone = "Enter a valid phone number";
+    return errors;
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setSending(true);
     try {
       const res = await fetch(`${API_BASE}/api/deals/${deal.id}/inquire`, {
@@ -243,9 +280,6 @@ const InquiryModal: React.FC<{ deal: Deal; isDark: boolean; onClose: () => void 
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Could not submit — try again");
       }
-      if(name === '' || email === ''){
-        throw new Error('You must fill name and email fields')
-      }
       posthog.capture("deal_inquiry", { deal_id: deal.id, city: deal.city });
       setSent(true);
     } catch (err) {
@@ -255,11 +289,16 @@ const InquiryModal: React.FC<{ deal: Deal; isDark: boolean; onClose: () => void 
     }
   };
 
-  const inputCls = `w-full px-3 py-2.5 rounded-xl border text-sm ${
+  const inputCls = (invalid?: boolean) => `w-full px-3 py-2.5 rounded-xl border text-sm ${
+    invalid
+      ? "border-red-500"
+      : isDark ? "border-slate-600" : "border-slate-200"
+  } ${
     isDark
-      ? "bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400"
-      : "bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400"
+      ? "bg-slate-700 text-slate-200 placeholder:text-slate-400"
+      : "bg-slate-50 text-slate-800 placeholder:text-slate-400"
   }`;
+  const fieldErrorCls = "text-[11px] text-red-500 -mt-1.5 mb-1.5";
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
@@ -296,15 +335,21 @@ const InquiryModal: React.FC<{ deal: Deal; isDark: boolean; onClose: () => void 
               Leave your contact details and {deal.agency ?? "the agency"} will reach out to you.
             </p>
 
-            <form onSubmit={submit} className="mt-4 space-y-2.5">
-              <input  required value={name} onChange={nameHandler}
-                placeholder="Your name" maxLength={80} className={inputCls} />
+            <form onSubmit={submit} noValidate className="mt-4 space-y-2.5">
+              <input required value={name} onChange={nameHandler}
+                placeholder="Your name" maxLength={80} className={inputCls(!!fieldErrors.name)} />
+              {fieldErrors.name && <p className={fieldErrorCls}>{fieldErrors.name}</p>}
+
               <input required type="email" value={email} onChange={emailHandler}
-                placeholder="Email" className={inputCls} />
-              <input value={phone} onChange={e => setPhone(e.target.value)}
-                placeholder="Phone (optional)" maxLength={30} className={inputCls} />
+                placeholder="Email" className={inputCls(!!fieldErrors.email)} />
+              {fieldErrors.email && <p className={fieldErrorCls}>{fieldErrors.email}</p>}
+
+              <input value={phone} onChange={phoneHandler} inputMode="tel"
+                placeholder="Phone (optional)" maxLength={30} className={inputCls(!!fieldErrors.phone)} />
+              {fieldErrors.phone && <p className={fieldErrorCls}>{fieldErrors.phone}</p>}
+
               <textarea value={message} onChange={e => setMessage(e.target.value)}
-                placeholder="Message (optional)" rows={2} maxLength={500} className={inputCls} />
+                placeholder="Message (optional)" rows={2} maxLength={500} className={inputCls()} />
 
               {error && <p className="text-xs text-red-500">{error}</p>}
 
