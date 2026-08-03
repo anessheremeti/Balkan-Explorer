@@ -261,12 +261,13 @@ if (generating) {
       </div>
 
       <div className="flex flex-wrap justify-between items-center gap-3 mt-3 sm:mt-4">
-        <h1 className={`text-2xl sm:text-4xl font-bold ${
-          isDark ? "text-gray-300" : "text-slate-900"
-        }`}>
-          {currentTrip ? `${t('trip_header')} ${currentTrip.destination}` : ''}
-        </h1>
-      
+        {currentTrip && (
+          <h1 className={`text-2xl sm:text-4xl font-bold ${
+            isDark ? "text-gray-300" : "text-slate-900"
+          }`}>
+            {t('trip_header')} {currentTrip.destination}
+          </h1>
+        )}
       </div>
 
       <PDFAuthModal open={showAuthModal} onClose={closeAuthModal} />

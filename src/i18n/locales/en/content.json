@@ -8,6 +8,7 @@
     "days": "Days",
     "departure": "Departure",
     "return": "Return",
+    "currency": "Currency",
     "travelers":"Travelers",
     "travelStyle":"Travel Style",
     "road_trip":"Road Trip",

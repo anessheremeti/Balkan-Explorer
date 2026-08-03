@@ -52,7 +52,7 @@ const Footer: React.FC = () => {
       } pt-16 pb-8 px-4 sm:px-6 lg:px-8 relative`}
     >
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
           
           {/* Brand */}
           <div className="space-y-6">
@@ -139,6 +139,43 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
+          {/* Features */}
+          <div>
+            <h3
+              className={`text-sm font-bold uppercase tracking-wider mb-6 ${
+                isDark ? "text-white" : "text-slate-900"
+              }`}
+            >
+              {t('features')}
+            </h3>
+
+            <ul className="space-y-4">
+              <li>
+                <Link to="/features/itinerary-builder" className={linkClass}>
+                  {t('feature_itinerary_builder')}
+                </Link>
+              </li>
+
+              <li>
+                <Link to="/features/route-mapping" className={linkClass}>
+                  {t('feature_route_mapping')}
+                </Link>
+              </li>
+
+              <li>
+                <Link to="/features/pdf-export" className={linkClass}>
+                  {t('feature_pdf_export')}
+                </Link>
+              </li>
+
+              <li>
+                <Link to="/features/support" className={linkClass}>
+                  {t('feature_support')}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Newsletter */}
           <div>
             <h3
@@ -157,6 +194,8 @@ const Footer: React.FC = () => {
               />
 
               <button
+                type="button"
+                aria-label={t('subscribe')}
                 className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white p-2.5 rounded-lg transition-colors duration-200 shadow-sm"
               >
                 <ArrowRight className="w-5 h-5" />
@@ -173,7 +212,7 @@ const Footer: React.FC = () => {
         >
           <p
             className={`text-sm ${
-              isDark ? "text-slate-400" : "text-slate-400"
+              isDark ? "text-slate-400" : "text-slate-500"
             }`}
           >
             {t('copyright')}

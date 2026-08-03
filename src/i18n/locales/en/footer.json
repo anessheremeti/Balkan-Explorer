@@ -8,8 +8,21 @@
   "destinations": "Destinations",
   "community": "Community",
   "help_center": "Help Center",
+  "features": "Features",
+  "feature_itinerary_builder": "Itinerary Builder",
+  "feature_route_mapping": "Route Mapping",
+  "feature_pdf_export": "PDF Export",
+  "feature_support": "24/7 Support",
   "newsletter": "Newsletter",
   "your_email": "Your email",
+  "subscribe": "Subscribe to newsletter",
   "copyright": "© 2026 BalkanExplorer. All rights reserved.",
-  "export_pdf": "Export PDF"
+  "export_pdf": "Export PDF",
+
+  "cookie_title": "We use cookies",
+  "cookie_desc": "We use a small number of cookies to remember your trip preferences and understand how travelers use BalkanExplorer. Read our",
+  "cookie_privacy_link": "Privacy Policy",
+  "cookie_accept": "Accept all",
+  "cookie_reject": "Reject non-essential",
+  "cookie_dismiss": "Dismiss"
 }

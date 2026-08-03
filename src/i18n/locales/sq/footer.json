@@ -8,8 +8,21 @@
   "destinations": "Destinacionet",
   "community": "Komuniteti",
   "help_center": "Qendra e ndihmës",
+  "features": "Veçoritë",
+  "feature_itinerary_builder": "Ndërtuesi i Itinerarit",
+  "feature_route_mapping": "Hartëzimi i Rrugës",
+  "feature_pdf_export": "Eksportimi në PDF",
+  "feature_support": "Mbështetje 24/7",
   "newsletter": "Njoftimet",
   "your_email": "Email-i juaj",
+  "subscribe": "Abonohu në njoftimet",
   "copyright": "© 2026 BalkanExplorer. Të gjitha të drejtat e rezervuara.",
-  "export_pdf": "Eksportoni PDF"
+  "export_pdf": "Eksportoni PDF",
+
+  "cookie_title": "Ne përdorim cookies",
+  "cookie_desc": "Përdorim një numër të vogël cookies për të kujtuar preferencat e udhëtimit tënd dhe për të kuptuar si udhëtarët e përdorin BalkanExplorer. Lexo",
+  "cookie_privacy_link": "Politikën e Privatësisë",
+  "cookie_accept": "Prano të gjitha",
+  "cookie_reject": "Refuzo jo-thelbësoret",
+  "cookie_dismiss": "Mbyll"
 }

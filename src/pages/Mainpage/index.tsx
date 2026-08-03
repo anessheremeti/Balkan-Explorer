@@ -268,10 +268,10 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                 <div className="space-y-2">
                   <label className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-slate-900"}`}>
                     {t("destination")}
-                    <span className={`hidden sm:inline ml-2 text-xs font-normal ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                    <span className="hidden sm:inline ml-2 text-xs font-normal text-slate-500">
                       Kosovo · Albania · North Macedonia · Montenegro
                     </span>
-                    <span className={`sm:hidden block text-xs font-normal mt-0.5 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                    <span className="sm:hidden block text-xs font-normal mt-0.5 text-slate-500">
                       Kosovo · Albania · N. Macedonia · Montenegro
                     </span>
                   </label>
@@ -307,7 +307,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                       {t("dates")}
                     </label>
                     {starting_date && returning_date && returning_date > starting_date && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sky-100 text-sky-600">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">
                         {deriveDuration(starting_date, returning_date)} {t("days")}
                       </span>
                     )}
@@ -315,10 +315,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <span className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                      <label htmlFor="trip-starting-date" className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                         {t("departure")}
-                      </span>
+                      </label>
                       <input
+                        id="trip-starting-date"
                         type="date"
                         value={starting_date}
                         min={today}
@@ -343,10 +344,11 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                     </div>
 
                     <div className="space-y-1">
-                      <span className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                      <label htmlFor="trip-returning-date" className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                         {t("return")}
-                      </span>
+                      </label>
                       <input
+                        id="trip-returning-date"
                         type="date"
                         value={returning_date}
                         min={
@@ -411,7 +413,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                         onClick={() => setStyle(id as TravelStyle)}
                         className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 rounded-xl border transition-all duration-200 hover:cursor-pointer ${
                           active
-                            ? "bg-sky-500 text-white border-sky-500 shadow-md"
+                            ? "bg-sky-700 text-white border-sky-700 shadow-md"
                             : isDark
                             ? "bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800"
                             : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
@@ -451,6 +453,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as Currency)}
+                    aria-label={t("currency")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded"
                   >
                     <option value="USD">USD</option>

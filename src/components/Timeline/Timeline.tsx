@@ -223,9 +223,9 @@ const Timeline: React.FC<TimelineProps> = ({ pendingTripId, onViewOnMap, activeM
             <Compass className="w-8 h-8 text-sky-500" />
           </div>
         </div>
-        <h3 className={`text-lg font-bold mb-1 ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+        <h2 className={`text-lg font-bold mb-1 ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
           Your next adventure is waiting
-        </h3>
+        </h2>
         <p className={`text-sm max-w-xs mx-auto mb-6 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
           Fill in the form above — destination, dates, travel style — and we'll build your personalized Balkan itinerary in seconds.
         </p>

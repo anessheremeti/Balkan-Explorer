@@ -19,6 +19,12 @@ import MyTravels from './pages/MyTravels/MyTravels';
 import PageTracker from './components/Analytics/PageTracker';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import AdminDashboard from './pages/Admin';
+import ItineraryBuilder from './pages/Features/ItineraryBuilder';
+import RouteMapping from './pages/Features/RouteMapping';
+import PDFExport from './pages/Features/PDFExport';
+import Support from './pages/Features/Support';
+import Privacy from './pages/Privacy/Privacy';
+import CookieConsent from './components/CookieConsent/CookieConsent';
 
 function App() {
   return (
@@ -41,6 +47,11 @@ function App() {
       <Route path="how-it-works" element={<HowItWorks />} />
       <Route path='/about' element={<AboutUsPage />} />
       <Route path='/travel-tips' element={<TravelTipsPage />} />
+      <Route path='/features/itinerary-builder' element={<ItineraryBuilder />} />
+      <Route path='/features/route-mapping' element={<RouteMapping />} />
+      <Route path='/features/pdf-export' element={<PDFExport />} />
+      <Route path='/features/support' element={<Support />} />
+      <Route path='/privacy' element={<Privacy />} />
 
       {/* Protected routes — redirect to /login if no access_token */}
       <Route element={<ProtectedRoute />}>
@@ -51,6 +62,7 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
       </Route>
     </Routes>
+    <CookieConsent />
     </>
   )
 }
