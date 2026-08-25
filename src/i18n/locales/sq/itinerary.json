@@ -6,5 +6,12 @@
   "building_subtitle": "AI jonë po krijon një plan të personalizuar ditë pas dite. Kjo zgjat ~30 sekonda.",
   "no_itinerary": "Nuk ka itinerar ende",
   "no_itinerary_desc": "Krijo një udhëtim për të filluar planifikimin.",
-  "no_activities": "Nuk ka aktivitete të planifikuara"
+  "no_activities": "Nuk ka aktivitete të planifikuara",
+
+  "gm_headline": "Duke Ndërtuar Itinerarin Tënd",
+  "gm_subtitle": "Po e përgatisim udhëtimin tënd të personalizuar. Kjo mund të zgjasë pak.",
+  "gm_status_1": "Duke gjetur vende reale për udhëtimin tënd…",
+  "gm_status_2": "Duke hartëzuar rrugën tënde…",
+  "gm_status_3": "Duke balancuar ushqimin, kulturën dhe pamjet…",
+  "gm_status_4": "Pothuajse gati…"
 }

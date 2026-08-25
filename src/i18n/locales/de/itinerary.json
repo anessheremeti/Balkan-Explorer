@@ -6,5 +6,12 @@
   "building_subtitle": "Unsere KI erstellt einen personalisierten Tagesplan. Dies dauert etwa 30 Sekunden.",
   "no_itinerary": "Noch keine Reiseroute",
   "no_itinerary_desc": "Erstellen Sie eine Reise, um mit der Planung zu beginnen.",
-  "no_activities": "Keine Aktivitäten geplant"
+  "no_activities": "Keine Aktivitäten geplant",
+
+  "gm_headline": "Ihre Reiseroute wird erstellt",
+  "gm_subtitle": "Wir stellen Ihre persönliche Reise zusammen. Das kann einen Moment dauern.",
+  "gm_status_1": "Echte Orte für Ihre Reise werden gesucht…",
+  "gm_status_2": "Ihre Route wird geplant…",
+  "gm_status_3": "Essen, Kultur und Sehenswürdigkeiten werden ausbalanciert…",
+  "gm_status_4": "Gleich fertig…"
 }

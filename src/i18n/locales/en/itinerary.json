@@ -6,5 +6,12 @@
   "building_subtitle": "Our AI is crafting a personalised day-by-day plan. This takes ~30 seconds.",
   "no_itinerary": "No itinerary yet",
   "no_itinerary_desc": "Create a trip to get started with your travel planning.",
-  "no_activities": "No activities planned"
+  "no_activities": "No activities planned",
+
+  "gm_headline": "Building Your Itinerary",
+  "gm_subtitle": "We're putting together your personalized trip. This may take a moment.",
+  "gm_status_1": "Finding real places for your trip…",
+  "gm_status_2": "Mapping out your route…",
+  "gm_status_3": "Balancing food, culture and sights…",
+  "gm_status_4": "Almost there…"
 }

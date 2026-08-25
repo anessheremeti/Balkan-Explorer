@@ -98,7 +98,7 @@ const CookieConsent: React.FC = () => {
               <button
                 type="button"
                 onClick={() => decide("accepted")}
-                className="flex-1 text-[13px] font-semibold py-2.5 rounded-xl bg-sky-600 text-white hover:bg-sky-700 transition-colors shadow-sm"
+                className="flex-1 text-[13px] font-semibold py-2.5 rounded-xl bg-sky-700 text-white hover:bg-sky-800 transition-colors shadow-sm"
               >
                 {t("cookie_accept")}
               </button>

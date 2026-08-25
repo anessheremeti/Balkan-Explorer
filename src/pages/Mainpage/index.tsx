@@ -15,6 +15,7 @@ import Navbar from "../../components/Navbar/Navbar";
 import PageIntro from "../../components/PageIntro/PageIntro";
 import PlanSection from "../PlanSection";
 import Footer from "../../components/Footer/Footer";
+import GeneratingModal from "../../components/GeneratingModal/GeneratingModal";
 import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 import { findDestinationOption } from "../../constants/allowedDestinations";
@@ -102,6 +103,13 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
   const [pendingTripId, setPendingTripId] = useState<string | null>(() => getPendingTripId());
   const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem("intro_shown"));
   const [userId] = useState<string | null>(() => sessionStorage.getItem("user_id"));
+  // Mirrors PlanSection's own poll-driven `generating` state — true from the
+  // moment a trip id exists until the itinerary is actually ready.
+  const [tripGenerating, setTripGenerating] = useState(false);
+  // Spans the whole request: the synchronous submit (loading) plus the
+  // async poll for AI/place generation (tripGenerating) — used to show the
+  // mobile progress sheet and to block a second submit while either is true.
+  const isBuildingItinerary = loading || tripGenerating;
 
   const { detecting, detectError, detectLocation } = useDetectLocation(setStarting_location);
 
@@ -470,19 +478,20 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
               {/* SUBMIT */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isBuildingItinerary}
                 className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3.5 sm:py-4 rounded-xl hover:cursor-pointer font-semibold text-sm sm:text-base hover:bg-slate-800 active:scale-[0.98] transition disabled:opacity-50"
               >
-                {loading ? "Creating..." : t("build_itinerary", "Build my itinerary")}
+                {isBuildingItinerary ? "Creating..." : t("build_itinerary", "Build my itinerary")}
                 <Wand2 className="text-sky-400" size={18} />
               </button>
             </form>
           </div>
         </section>
 
-        <PlanSection pendingTripId={pendingTripId} userId={userId} />
+        <PlanSection pendingTripId={pendingTripId} userId={userId} onGeneratingChange={setTripGenerating} />
         <Footer />
       </main>
+      <GeneratingModal open={isBuildingItinerary} />
     </div>
   );
 };

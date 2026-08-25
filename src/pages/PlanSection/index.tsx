@@ -16,8 +16,11 @@ import PDFAuthModal from "../../components/DownloadPDF/PDFAuthModal";
 interface PlanSectionProps {
   userId: string | null;
   pendingTripId?: string | null;
+  // Mirrors the local `generating` state up to the caller — lets Mainpage
+  // show a mobile "generating" overlay without duplicating this poll loop.
+  onGeneratingChange?: (generating: boolean) => void;
 }
-const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
+const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId, onGeneratingChange }) => {
   const POLL_INTERVAL_MS = 2000;
   const POLL_MAX_ATTEMPTS = 75; // 150 s — covers 55 s AI timeout + fallback save
   const {t} = useTranslation('itinerary');
@@ -54,6 +57,10 @@ const PlanSection: React.FC<PlanSectionProps> = ({ userId, pendingTripId }) => {
     
 
   const isDark = theme === "dark";
+
+  useEffect(() => {
+    onGeneratingChange?.(generating);
+  }, [generating, onGeneratingChange]);
 
   // ── Poll until AI itinerary is ready, then load it ───────────────────────
     useEffect(() => {
