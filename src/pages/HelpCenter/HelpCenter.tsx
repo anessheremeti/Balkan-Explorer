@@ -5,6 +5,7 @@ import Footer from '../../components/Footer/Footer';
 import Navbar from '../../components/Navbar/Navbar';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { JsonLd } from '../../components/Seo/Seo';
 
 const HelpCenterPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,6 +55,19 @@ const HelpCenterPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      {/* FAQ answers are collapsed (not in the DOM) until opened, so expose them as structured data */}
+      <JsonLd
+        id="faq"
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: { "@type": "Answer", text: faq.answer },
+          })),
+        }}
+      />
       <Navbar />
         {/* Hero Section */}
         <section className={`${bgPrimary} border-b ${borderPrimary} pt-12 pb-12`}>

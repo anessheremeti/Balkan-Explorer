@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Star, MapPin, Calendar, Globe, DollarSign } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,11 @@ import destinationService from "../../hooks/destinationService";
 import type { Destination } from "../../hooks/destinationService";
 import { useTheme } from "../../context/ThemeContext";
 import { Analytics } from "../../lib/analytics";
+import Seo from "../../components/Seo/Seo";
+import { absoluteUrl } from "../../seo/site";
+
+const truncate = (text: string, max: number) =>
+  text.length <= max ? text : `${text.slice(0, text.lastIndexOf(" ", max - 1)).replace(/[,.;:]$/, "")}…`;
 
 const DestinationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -85,6 +90,7 @@ const DestinationDetail: React.FC = () => {
   if (error || !destination) {
     return (
       <div className={`min-h-screen flex flex-col ${isDark ? "bg-slate-900" : "bg-white"}`}>
+        <Seo title={t("dest_detail_not_found_title")} noindex />
         <Navbar />
         <div className={`flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-20 text-center`}>
           <div className={`inline-block p-8 rounded-lg ${isDark ? "bg-slate-800" : "bg-slate-100"}`}>
@@ -110,8 +116,44 @@ const DestinationDetail: React.FC = () => {
     );
   }
 
+  const pageUrl = absoluteUrl(`/destination/${destination.id}`);
+  const ogImage = destination.images?.[0] || destination.hero_image;
+
   return (
     <div className={`min-h-screen flex flex-col ${isDark ? "bg-slate-900 text-slate-100" : "bg-white text-slate-900"}`}>
+      <Seo
+        title={`${destination.name}, ${destination.country}: Travel Guide & Highlights`}
+        description={truncate(destination.description, 155)}
+        path={`/destination/${destination.id}`}
+        image={ogImage}
+        type="article"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "TouristDestination",
+            name: destination.name,
+            description: destination.description,
+            url: pageUrl,
+            image: destination.images?.length ? destination.images : [destination.hero_image],
+            containedInPlace: { "@type": "Country", name: destination.country },
+            ...(destination.highlights?.length && {
+              includesAttraction: destination.highlights.map((h) => ({
+                "@type": "TouristAttraction",
+                name: h.name,
+                ...(h.description && { description: h.description }),
+              })),
+            }),
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Destinations", item: absoluteUrl("/destinations") },
+              { "@type": "ListItem", position: 2, name: destination.name, item: pageUrl },
+            ],
+          },
+        ]}
+      />
       <Navbar />
 
       <main className="flex-1">
@@ -154,11 +196,17 @@ const DestinationDetail: React.FC = () => {
             className="space-y-4"
           >
             {/* Breadcrumb */}
-            <div className="flex items-center space-x-2 text-sm">
-              <span className={isDark ? "text-slate-400" : "text-slate-500"}>{t("dest_detail_breadcrumb")}</span>
-              <span className={isDark ? "text-slate-600" : "text-slate-300"}>/</span>
-              <span className="font-semibold text-[#0ea5e9]">{destination.country}</span>
-            </div>
+            <nav aria-label="Breadcrumb">
+              <ol className="flex items-center space-x-2 text-sm">
+                <li>
+                  <Link to="/destinations" className={`hover:text-[#0ea5e9] ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                    {t("dest_detail_breadcrumb")}
+                  </Link>
+                </li>
+                <li aria-hidden="true" className={isDark ? "text-slate-600" : "text-slate-300"}>/</li>
+                <li aria-current="page" className="font-semibold text-[#0ea5e9]">{destination.name}</li>
+              </ol>
+            </nav>
 
             {/* Title and Rating */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">

@@ -34,7 +34,7 @@ const PageIntro: React.FC<PageIntroProps> = ({ onComplete }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-9999 flex flex-col items-center justify-center overflow-hidden"
       style={{ background: 'linear-gradient(160deg, #070d1c 0%, #0a1830 58%, #05101e 100%)' }}
       animate={exiting ? { y: '-100%' } : { y: '0%' }}
       transition={exiting ? { duration: 0.9, ease: [0.76, 0, 0.24, 1] } : { duration: 0 }}
@@ -199,7 +199,8 @@ const PageIntro: React.FC<PageIntroProps> = ({ onComplete }) => {
       </svg>
 
       {/* ── App name — staggered clip reveal ───────────────────────── */}
-      <div className="flex overflow-hidden" role="heading" aria-level={1} aria-label="BalkanExplorer">
+      {/* Decorative splash — the page's real <h1> lives in the hero */}
+      <div className="flex overflow-hidden" aria-hidden="true">
         {APP_CHARS.map((char, i) => (
           <motion.span
             key={i}

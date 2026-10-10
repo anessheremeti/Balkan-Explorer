@@ -196,7 +196,7 @@ const Footer: React.FC = () => {
               <button
                 type="button"
                 aria-label={t('subscribe')}
-                className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white p-2.5 rounded-lg transition-colors duration-200 shadow-sm"
+                className="bg-brand-500 hover:bg-600 text-white p-2.5 rounded-lg transition-colors duration-200 shadow-sm"
               >
                 <ArrowRight className="w-5 h-5" />
               </button>
@@ -217,6 +217,9 @@ const Footer: React.FC = () => {
           >
             {t('copyright')}
           </p>
+          <Link to="/privacy" className={linkClass}>
+            {t('cookie_privacy_link')}
+          </Link>
         </div>
       </div>
 

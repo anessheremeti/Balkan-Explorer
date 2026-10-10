@@ -25,6 +25,8 @@ import PDFExport from './pages/Features/PDFExport';
 import Support from './pages/Features/Support';
 import Privacy from './pages/Privacy/Privacy';
 import CookieConsent from './components/CookieConsent/CookieConsent';
+import NotFound from './pages/NotFound/NotFound';
+import { RouteSeo } from './components/Seo/Seo';
 
 function App() {
   return (
@@ -32,6 +34,9 @@ function App() {
 
     <ScrollToTop />
     <PageTracker />
+    {/* Title/description/canonical per route — see src/seo/routes.json.
+        Keep that file (and the route list in netlify.toml) in sync with these routes. */}
+    <RouteSeo />
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<Mainpage />} />
@@ -61,6 +66,8 @@ function App() {
         {/* Server re-checks admin rights on every /api/admin call */}
         <Route path="/admin" element={<AdminDashboard />} />
       </Route>
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
     <CookieConsent />
     </>

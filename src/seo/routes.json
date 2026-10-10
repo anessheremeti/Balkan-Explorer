@@ -1,0 +1,82 @@
+{
+  "siteName": "BalkanExplorer",
+  "defaultImage": "/og-image.jpg",
+  "indexable": {
+    "/": {
+      "title": "BalkanExplorer — AI Trip Planner for the Balkans",
+      "description": "Plan a day-by-day trip through Kosovo, Albania, North Macedonia and Montenegro. Pick your dates, budget and travel style and get a mapped itinerary in seconds.",
+      "priority": 1.0
+    },
+    "/destinations": {
+      "title": "Balkan Destinations: Kotor, Ohrid, Sarandë, Prizren & More",
+      "description": "Browse the Balkans' best towns and coastlines — Kotor, Ohrid, Sarandë, Prizren, Gjirokastër, Budva, Pejë and Skopje — with ratings, highlights and travel tips.",
+      "priority": 0.9
+    },
+    "/how-it-works": {
+      "title": "How It Works",
+      "description": "From picking a destination to sharing your trip: the steps to plan a Balkan itinerary with BalkanExplorer.",
+      "priority": 0.7
+    },
+    "/travel-tips": {
+      "title": "Balkan Travel Tips",
+      "description": "Practical advice before you go: getting around by bus, cash and currencies, local SIM cards, safety, etiquette and the languages you will hear.",
+      "priority": 0.7
+    },
+    "/community": {
+      "title": "Traveler Community",
+      "description": "Trip stories, photos and recommendations from travelers exploring Kosovo, Albania, North Macedonia and Montenegro.",
+      "priority": 0.6
+    },
+    "/help-center": {
+      "title": "Help Center & FAQ",
+      "description": "Answers to common questions about planning trips, saving itineraries, PDF export and your BalkanExplorer account.",
+      "priority": 0.5
+    },
+    "/about": {
+      "title": "About Us",
+      "description": "The story behind BalkanExplorer and why we set out to make trips across Kosovo, Albania, North Macedonia and Montenegro easier to plan.",
+      "priority": 0.5
+    },
+    "/contact": {
+      "title": "Contact Us",
+      "description": "Get in touch with the BalkanExplorer team about your trip, partnerships or feedback.",
+      "priority": 0.4
+    },
+    "/features/itinerary-builder": {
+      "title": "AI Itinerary Builder",
+      "description": "A day-by-day Balkan itinerary built around real restaurants, museums and landmarks from OpenStreetMap, matched to your dates and travel style.",
+      "priority": 0.6
+    },
+    "/features/route-mapping": {
+      "title": "Route Mapping",
+      "description": "See every stop of your Balkan itinerary on a real map, day by day, using the exact coordinates of each place.",
+      "priority": 0.6
+    },
+    "/features/pdf-export": {
+      "title": "PDF Itinerary Export",
+      "description": "Download your Balkan itinerary as a clean PDF to use offline or share with your travel companions.",
+      "priority": 0.5
+    },
+    "/features/support": {
+      "title": "Traveler Support",
+      "description": "Help with your trip or the app, whenever you need it: a searchable help center plus a real person to contact.",
+      "priority": 0.4
+    },
+    "/privacy": {
+      "title": "Privacy Policy",
+      "description": "How BalkanExplorer collects, uses and protects your data, and the cookie choices available to you.",
+      "priority": 0.2
+    }
+  },
+  "noindex": {
+    "/login": { "title": "Log In" },
+    "/signup": { "title": "Sign Up" },
+    "/forgot-password": { "title": "Forgot Password" },
+    "/reset-password": { "title": "Reset Password" },
+    "/app-settings": { "title": "App Settings" },
+    "/account-settings": { "title": "Account Settings" },
+    "/my-travels": { "title": "My Travels" },
+    "/admin": { "title": "Admin" }
+  },
+  "destinationIds": ["1", "2", "3", "4", "5", "6", "7", "8"]
+}

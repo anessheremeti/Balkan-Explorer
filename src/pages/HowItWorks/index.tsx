@@ -25,9 +25,9 @@ const HowItWorks: React.FC = () => {
         id="how-it-works"
       >
         <div className="text-center space-y-4">
-          <h2 className={`text-3xl font-bold tracking-tight ${isDark ? "text-slate-50" : "text-slate-900"}`}>
+          <h1 className={`text-3xl font-bold tracking-tight ${isDark ? "text-slate-50" : "text-slate-900"}`}>
             {t('hiw_title')}
-          </h2>
+          </h1>
           <p className={`text-sm max-w-lg mx-auto leading-relaxed ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             {t('hiw_subtitle')}
           </p>

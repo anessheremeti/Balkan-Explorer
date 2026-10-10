@@ -1,16 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, MapPin, Star, Filter, ArrowRight, Info, ChevronDown, TrendingUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Footer from '../../components/Footer/Footer';
 import DealsShowcase from '../../components/DealsShowcase/DealsShowcase';
-import kotor from '../../assets/Gemini_Generated_Image_2kjty02kjty02kjt.png'
-import sarande from '../../assets/Gemini_Generated_Image_1m3iwg1m3iwg1m3i.png'
-import ohrid from '../../assets/Gemini_Generated_Image_i2h63xi2h63xi2h6.png'
-import gjirokaster from '../../assets/645090253_1636169380738503_8816130649849691409_n.jpg'
-import prizren from '../../assets/download.jpg'
-import budva from '../../assets/download (1).jpg'
+import kotor from '../../assets/kotor.webp'
+import sarande from '../../assets/sarande.webp'
+import ohrid from '../../assets/ohrid.webp'
+import gjirokaster from '../../assets/gjirokaster.webp'
+import prizren from '../../assets/prizren.webp'
+import budva from '../../assets/budva.webp'
 import {useTheme} from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
@@ -131,7 +131,9 @@ const DestinationsPage: React.FC = () => {
           <img 
             src="https://picsum.photos/seed/balkans-hero/1920/1080?blur=2" 
             className="w-full h-full object-cover opacity-40"
-            alt="Balkans Hero"
+            alt=""
+            aria-hidden="true"
+            fetchPriority="high"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-linear-to-b from-slate-900/40 to-slate-50/50" />
@@ -261,7 +263,9 @@ const DestinationsPage: React.FC = () => {
               <div className="relative h-64 overflow-hidden">
                 <img 
                   src={dest.image_url} 
-                  alt={dest.name}
+                  alt={`${dest.name}, ${dest.country}`}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   referrerPolicy="no-referrer"
                 />
@@ -292,13 +296,15 @@ const DestinationsPage: React.FC = () => {
                 </p>
                 
                 <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                  <button 
-                    onClick={() => navigate(`/destination/${dest.id}`)}
+                  {/* A real <a href> (not just onClick) so crawlers can discover detail pages */}
+                  <Link
+                    to={`/destination/${dest.id}`}
+                    onClick={(e) => e.stopPropagation()}
                     className="flex items-center space-x-2 text-slate-400 hover:text-slate-600 transition-colors"
                   >
                     <Info size={18} />
                     <span className="text-xs font-bold uppercase tracking-widest">{t('dest_details')}</span>
-                  </button>
+                  </Link>
                   <button className="flex items-center space-x-2 bg-[#0f172a] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-800 transition-all active:scale-95">
                     <span>{t('dest_plan_trip')}</span>
                     <ArrowRight size={16} />

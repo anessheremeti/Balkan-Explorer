@@ -1,6 +1,17 @@
 [build]
-  command = "npm run build"
+  # Chromium is needed by scripts/prerender.mjs (run at the end of `npm run build`)
+  command = "npx playwright install chromium && npm run build"
   publish = "dist"
+
+[build.environment]
+  # Install browsers inside node_modules so Netlify's dependency cache keeps them
+  PLAYWRIGHT_BROWSERS_PATH = "0"
+
+# Vite fingerprints everything in /assets, so it can be cached forever
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
 # ── PostHog reverse proxy ──────────────────────────────────────────────────
 # Many ad blockers / privacy browsers (Brave, Firefox strict mode, uBlock)
@@ -21,9 +32,120 @@
   status = 200
   force = true
 
-# Redirect all routes to index.html so React Router handles them client-side.
-# Without this, direct links to /my-travels, /plan etc. return 404 on Netlify.
+# ── SPA routes ─────────────────────────────────────────────────────────────
+# Known React Router paths are rewritten to the SPA shell with a 200. These
+# rules aren't forced, so a prerendered page (dist/about.html etc., written by
+# scripts/prerender.mjs) is served instead whenever it exists. Keep this list
+# in sync with src/App.tsx — the prerender step fails the build if a route
+# from src/seo/routes.json is missing here.
+[[redirects]]
+  from = "/destination/*"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/destinations"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/how-it-works"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/travel-tips"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/community"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/help-center"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/about"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/features/itinerary-builder"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/features/route-mapping"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/features/pdf-export"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/features/support"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/signup"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/forgot-password"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/reset-password"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/app-settings"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/account-settings"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/my-travels"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/app-shell.html"
+  status = 200
+
+# Anything else is a real 404 (the SPA still loads and shows its NotFound page),
+# so search engines drop dead URLs instead of indexing them as soft 404s.
 [[redirects]]
   from = "/*"
-  to = "/index.html"
-  status = 200
+  to = "/app-shell.html"
+  status = 404
