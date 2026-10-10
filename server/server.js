@@ -238,7 +238,9 @@ async function generateAndSaveItinerary(tripId, tripData) {
 
 // ─── Routes: Trip creation ────────────────────────────────────────────────────
 
-app.post('/api/trips/create-fast', tripCreateLimiter, async (req, res) => {
+// TEMP: tripCreateLimiter (5 trips/hour per IP) disabled — restore before relying on it in production:
+// app.post('/api/trips/create-fast', tripCreateLimiter, async (req, res) => {
+app.post('/api/trips/create-fast', async (req, res) => {
   try {
     const { tripData, userId, guestId } = req.body;
 
