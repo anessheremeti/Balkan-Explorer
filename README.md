@@ -271,13 +271,13 @@ The frontend and backend must be deployed to **separate hosts** — the Express 
 1. Connect the GitHub repo in the Netlify dashboard
 2. Build settings come from `netlify.toml` (installs Chromium, then `npm run build`, which also prerenders public pages and writes `sitemap.xml`/`robots.txt`); publish directory: `dist`
 3. Add all `VITE_*` variables from `.env.example` in **Site settings → Environment variables**
-4. Set `VITE_API_URL` to your deployed backend URL, and `VITE_SITE_URL` to the public origin (`https://balkan-explorer.online`)
+4. Set `VITE_API_URL` to your deployed backend URL, and `VITE_SITE_URL` to the public origin (`https://balkan-explorer.site`)
 5. Trigger a redeploy after setting env vars (they are baked in at build time)
 
-#### Custom domain (`balkan-explorer.online`)
+#### Custom domain (`balkan-explorer.site`)
 
 1. Netlify → **Domain management** → add the domain, use **Netlify DNS**, and point the registrar's nameservers at the four Netlify ones
-2. Set the apex (`balkan-explorer.online`) as the **primary domain** — `www` and `*.netlify.app` then 301-redirect to it, which also keeps the browser origin equal to the backend's `FRONTEND_URL`
+2. Set the apex (`balkan-explorer.site`) as the **primary domain** — `www` and `*.netlify.app` then 301-redirect to it, which also keeps the browser origin equal to the backend's `FRONTEND_URL`
 3. Provision the HTTPS certificate, then redeploy so `VITE_SITE_URL` is picked up
 4. Update the places that know the origin: Render `FRONTEND_URL`, Supabase **Auth → URL Configuration** (Site URL + Redirect URLs), the Google Maps key's HTTP-referrer list, and a Resend-verified `EMAIL_FROM` domain
 
@@ -287,7 +287,7 @@ A `render.yaml` blueprint is included at the repo root.
 
 1. In the Render dashboard: **New → Blueprint** → connect this GitHub repo → Render reads `render.yaml` and creates the `travel-explorer-api` web service
 2. Add all variables from `server/.env.example` in the service's **Environment** tab
-3. Set `FRONTEND_URL` to your public site origin (e.g. `https://balkan-explorer.online`; comma-separate several origins) so CORS allows it
+3. Set `FRONTEND_URL` to your public site origin (e.g. `https://balkan-explorer.site`; comma-separate several origins) so CORS allows it
 4. Render will give you a public URL (`https://travel-explorer-api.onrender.com`-style) — paste it into `VITE_API_URL` in Netlify
 
 Without the blueprint: **New → Web Service** → root directory `server`, build command `npm install`, start command `node server.js`.
