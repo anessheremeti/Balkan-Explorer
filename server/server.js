@@ -41,15 +41,23 @@ if (missing.length) {
 const app = express();
 // 4 MB limit: deal photos travel as base64 in the admin create-deal request
 app.use(express.json({ limit: '4mb' }));
-const FRONTEND_URL = (process.env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/$/, '');
+// FRONTEND_URL may hold several comma-separated origins, e.g. the custom domain
+// plus the old *.netlify.app one while a domain switch is in progress.
+const FRONTEND_ORIGINS = (process.env.FRONTEND_URL ?? 'http://localhost:5173')
+  .split(',')
+  .map(s => s.trim().replace(/\/$/, ''))
+  .filter(Boolean);
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 app.use(cors({
   origin: (origin, callback) => {
     // No origin = same-origin request or curl — always allow.
     if (!origin) return callback(null, true);
-    // Production: only the configured FRONTEND_URL is accepted.
-    if (IS_PROD) return callback(origin === FRONTEND_URL ? null : new Error('Not allowed by CORS'), origin === FRONTEND_URL);
+    // Production: only the configured FRONTEND_URL origins are accepted.
+    if (IS_PROD) {
+      const allowed = FRONTEND_ORIGINS.includes(origin);
+      return callback(allowed ? null : new Error('Not allowed by CORS'), allowed);
+    }
     // Development: allow any localhost port (5173, 5174, 5175 … Vite auto-bumps when port is busy).
     const isLocalhost = /^https?:\/\/localhost:\d+$/.test(origin);
     callback(isLocalhost ? null : new Error('Not allowed by CORS'), isLocalhost);

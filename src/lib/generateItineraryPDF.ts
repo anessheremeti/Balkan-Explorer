@@ -119,7 +119,7 @@ function drawPageFooter(p: jsPDF, pageNum: number, totalPages: number, date: str
   const fy = PH - 14;
   draw(p, C.slate200); p.setLineWidth(0.3); p.line(ML, fy, PW - MR, fy);
   p.setFont('helvetica', 'normal'); p.setFontSize(6.5); txt(p, C.slate400);
-  p.text('BalkanExplorer  ·  balkan-explorer.netlify.app', ML, fy + 5);
+  p.text('BalkanExplorer  ·  balkan-explorer.online', ML, fy + 5);
   const pageStr = `Page ${pageNum} of ${totalPages}`;
   const genStr  = `Generated ${date}`;
   p.text(pageStr, PW / 2 - p.getTextWidth(pageStr) / 2, fy + 5);
