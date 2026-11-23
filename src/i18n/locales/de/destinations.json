@@ -93,5 +93,29 @@
   "skopje_h3_name": "Museum für Moderne Kunst",
   "skopje_h3_desc": "Beeindruckende zeitgenössische Kunstsammlung",
   "skopje_h4_name": "Gedenkstatuen",
-  "skopje_h4_desc": "Ikonische Denkmäler in der ganzen Stadt"
+  "skopje_h4_desc": "Ikonische Denkmäler in der ganzen Stadt",
+
+  "berat_description": "Berat, bekannt als 'Stadt der tausend Fenster', gehört zum UNESCO-Welterbe: Weiße osmanische Häuser ziehen sich den Hang über dem Fluss Osum hinauf. Die Burg ist bis heute bewohnt, und die Altstadtviertel Mangalem und Gorica liegen sich an einer Steinbrücke gegenüber.",
+  "berat_location": "Mittelalbanien",
+  "berat_best_time": "April bis Oktober",
+  "berat_h1_name": "Burg von Berat",
+  "berat_h1_desc": "Bewohnte Zitadelle auf dem Hügel, mit byzantinischen Kirchen innerhalb der Mauern",
+  "berat_h2_name": "Viertel Mangalem",
+  "berat_h2_desc": "Reihen osmanischer Häuser, deren Fenster der Stadt ihren Beinamen gaben",
+  "berat_h3_name": "Onufri-Museum",
+  "berat_h3_desc": "Ikonen des Malers Onufri aus dem 16. Jahrhundert in der Marienkirche",
+  "berat_h4_name": "Gorica-Brücke",
+  "berat_h4_desc": "Steinbrücke über den Osum zwischen Mangalem und Gorica",
+
+  "theth_description": "Theth ist ein Bergdorf tief in den Albanischen Alpen, in einem Tal umgeben von Kalksteingipfeln. Steinerne Gästehäuser, eine einsame Kirche und alte Wohntürme machen es zum klassischen Ausgangspunkt für Wanderungen in Nordalbanien, auch über den Pass nach Valbona.",
+  "theth_location": "Nordalbanien, Kreis Shkodër",
+  "theth_best_time": "Juni bis September",
+  "theth_h1_name": "Wanderweg Theth – Valbona",
+  "theth_h1_desc": "Ganztägige Wanderung über den Valbona-Pass zwischen zwei Bergtälern",
+  "theth_h2_name": "Blaues Auge von Theth",
+  "theth_h2_desc": "Klares, türkisfarbenes Becken, gespeist von Bergquellen",
+  "theth_h3_name": "Grunas-Wasserfall",
+  "theth_h3_desc": "Hoher Wasserfall, ein kurzer Spaziergang vom Dorfzentrum",
+  "theth_h4_name": "Turm der Zuflucht",
+  "theth_h4_desc": "Steinerner Wohnturm, einst Zufluchtsort während der Blutrache"
 }

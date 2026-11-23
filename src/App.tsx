@@ -24,6 +24,7 @@ import RouteMapping from './pages/Features/RouteMapping';
 import PDFExport from './pages/Features/PDFExport';
 import Support from './pages/Features/Support';
 import Privacy from './pages/Privacy/Privacy';
+import PhotoCredits from './pages/PhotoCredits/PhotoCredits';
 import CookieConsent from './components/CookieConsent/CookieConsent';
 import NotFound from './pages/NotFound/NotFound';
 import { RouteSeo } from './components/Seo/Seo';
@@ -57,6 +58,7 @@ function App() {
       <Route path='/features/pdf-export' element={<PDFExport />} />
       <Route path='/features/support' element={<Support />} />
       <Route path='/privacy' element={<Privacy />} />
+      <Route path='/photo-credits' element={<PhotoCredits />} />
 
       {/* Protected routes — redirect to /login if no access_token */}
       <Route element={<ProtectedRoute />}>

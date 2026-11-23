@@ -217,9 +217,14 @@ const Footer: React.FC = () => {
           >
             {t('copyright')}
           </p>
-          <Link to="/privacy" className={linkClass}>
-            {t('cookie_privacy_link')}
-          </Link>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <Link to="/privacy" className={linkClass}>
+              {t('cookie_privacy_link')}
+            </Link>
+            <Link to="/photo-credits" className={linkClass}>
+              {t('photo_credits')}
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -66,6 +66,11 @@
       "title": "Privacy Policy",
       "description": "How BalkanExplorer collects, uses and protects your data, and the cookie choices available to you.",
       "priority": 0.2
+    },
+    "/photo-credits": {
+      "title": "Photo Credits",
+      "description": "Photographers and open licences for the Wikimedia Commons photos used on BalkanExplorer.",
+      "priority": 0.1
     }
   },
   "noindex": {
@@ -78,5 +83,5 @@
     "/my-travels": { "title": "My Travels" },
     "/admin": { "title": "Admin" }
   },
-  "destinationIds": ["1", "2", "3", "4", "5", "6", "7", "8"]
+  "destinationIds": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 }

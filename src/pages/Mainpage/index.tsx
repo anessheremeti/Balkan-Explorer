@@ -28,6 +28,8 @@ import {
   LOCATION_INPUT_REGEX,
   type TripFormErrors,
 } from "../../validations/tripFormValidation";
+import HomeSections from "./home/HomeSections";
+import type { RouteIdea } from "./home/homeContent";
 
 type TravelStyle = "road" | "bus" | "resort";
 type Currency = "USD" | "EUR" | "GBP";
@@ -196,6 +198,49 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
     }
   };
 
+  const pickDestination = (city: string) => {
+    const option = findDestinationOption(city);
+    if (!option) return;
+    setDestination(option.value);
+    setDestinationConfirmed(true);
+    setErrors((prev) => ({ ...prev, destination: undefined }));
+  };
+
+  const pickOrigin = (city: string) => {
+    setStarting_location(city);
+    setErrors((prev) => ({ ...prev, starting_location: undefined }));
+  };
+
+  // Brings the form back into view after a pick further down the page, and
+  // moves focus to the next thing to fill in (or the submit button).
+  const scrollToForm = (originFilled: boolean) => {
+    const form = document.getElementById("trip-form");
+    if (!form) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    form.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    const target = originFilled
+      ? form.querySelector<HTMLElement>('button[type="submit"]')
+      : form.querySelector<HTMLElement>("input");
+    target?.focus({ preventScroll: true });
+  };
+
+  const applyRoute = (route: RouteIdea) => {
+    pickDestination(route.to);
+    pickOrigin(route.fromValue);
+    setStyle(route.style);
+    const start = starting_date || today;
+    setReturningDate(toDateString(new Date(new Date(start).getTime() + route.days * 86_400_000)));
+    setErrors({});
+    scrollToForm(true);
+  };
+
+  const sections = (
+    <HomeSections
+      onUseRoute={applyRoute}
+      onStart={() => scrollToForm(!!starting_location.trim())}
+    />
+  );
+
   return (
     <div className={`w-full min-h-screen ${isDark ? "bg-slate-950" : "bg-white"}`}>
       {showIntro && (
@@ -232,6 +277,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
             <div className="h-1.5 w-full bg-linear-to-r from-sky-400 via-sky-500 to-blue-600 rounded-t-2xl" />
 
             <form
+              id="trip-form"
               onSubmit={onSubmitHandler}
               className={`border rounded-b-2xl shadow-lg p-4 sm:p-8 lg:p-10 space-y-5 sm:space-y-8 ${
                 isDark ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
@@ -489,6 +535,7 @@ const Mainpage: React.FC<MainpageProps> = ({ onTripCreated }) => {
         </section>
 
         <PlanSection pendingTripId={pendingTripId} userId={userId} onGeneratingChange={setTripGenerating} />
+        {sections}
         <Footer />
       </main>
       <GeneratingModal open={isBuildingItinerary} />

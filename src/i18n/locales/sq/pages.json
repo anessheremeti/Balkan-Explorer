@@ -202,5 +202,10 @@
   "fpsup_c3_title": "Pyetje agjencive përmes WhatsApp",
   "fpsup_c3_desc": "Për pyetje specifike rreth një oferte, kontakto agjencinë direkt në WhatsApp — përgjigjet vijnë drejtpërdrejt nga njerëzit që drejtojnë atë ofertë.",
   "fpsup_c4_title": "Gjithmonë e arritshme",
-  "fpsup_c4_desc": "Cilido kanal që zgjedh, mbështetja s'kufizohet nga orari zyrtar — na kontakto sa herë të lindë një pyetje, ditë a natë."
+  "fpsup_c4_desc": "Cilido kanal që zgjedh, mbështetja s'kufizohet nga orari zyrtar — na kontakto sa herë të lindë një pyetje, ditë a natë.",
+  "credits_title": "Burimet e fotove",
+  "credits_intro": "Disa foto në BalkanExplorer vijnë nga Wikimedia Commons me licenca të hapura. Faleminderit fotografëve që i ndanë.",
+  "credits_photo": "Fotoja",
+  "credits_author": "Autori",
+  "credits_license": "Licenca"
 }

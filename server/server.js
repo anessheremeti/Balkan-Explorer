@@ -71,7 +71,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // ─── Destination allow-list (mirrors src/constants/allowedDestinations.ts) ─────
 const BALKAN_DESTINATIONS = [
   { country: 'Kosovo',         cities: ['Pristina','Prizren','Pejë','Gjakova','Mitrovica','Ferizaj','Gjilan','Vushtrri','Suhareka','Rahovec','Drenas','Lipjan','Deçan','Klina','Malisheva','Kamenica'] },
-  { country: 'Albania',        cities: ['Tirana','Durrës','Shkodër','Vlorë','Elbasan','Berat','Gjirokastër','Korçë','Fier','Sarandë','Pogradec','Lushnjë','Kavajë','Lezhë','Kukës','Laç'] },
+  { country: 'Albania',        cities: ['Tirana','Durrës','Shkodër','Vlorë','Elbasan','Berat','Gjirokastër','Korçë','Fier','Sarandë','Pogradec','Lushnjë','Kavajë','Lezhë','Kukës','Laç','Theth'] },
   { country: 'North Macedonia', cities: ['Skopje','Ohrid','Bitola','Kumanovo','Tetovo','Štip','Veles','Struga','Gostivar','Kičevo','Strumica','Kavadarci','Debar','Kochani','Negotino'] },
   { country: 'Montenegro',     cities: ['Podgorica','Budva','Kotor','Bar','Herceg Novi','Nikšić','Tivat','Ulcinj','Bijelo Polje','Pljevlja','Berane','Cetinje','Rožaje','Kolašin','Žabljak'] },
 ];

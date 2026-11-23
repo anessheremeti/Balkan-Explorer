@@ -93,5 +93,29 @@
   "skopje_h3_name": "Muzeu i Artit Modern",
   "skopje_h3_desc": "Koleksion mbresëlënës i artit bashkëkohor",
   "skopje_h4_name": "Statujat Përkujtimore",
-  "skopje_h4_desc": "Monumente ikonike në të gjithë qytetin"
+  "skopje_h4_desc": "Monumente ikonike në të gjithë qytetin",
+
+  "berat_description": "I njohur si 'Qyteti i një mijë dritareve', Berati është qytet i trashëgimisë botërore UNESCO, ku shtëpitë e bardha osmane ngjiten shpatit mbi lumin Osum. Kalaja e tij banohet ende, dhe lagjet e vjetra Mangalem dhe Gorica shohin njëra-tjetrën përtej një ure guri.",
+  "berat_location": "Shqipëria e Mesme",
+  "berat_best_time": "Prill – Tetor",
+  "berat_h1_name": "Kalaja e Beratit",
+  "berat_h1_desc": "Kështjellë në majë kodre që banohet ende, me kisha bizantine brenda mureve",
+  "berat_h2_name": "Lagjja Mangalem",
+  "berat_h2_desc": "Rreshta shtëpish osmane, dritaret e të cilave i dhanë qytetit nofkën",
+  "berat_h3_name": "Muzeu Onufri",
+  "berat_h3_desc": "Ikona të piktorit Onufri të shekullit XVI, brenda Kishës së Fjetjes së Shën Mërisë",
+  "berat_h4_name": "Ura e Goricës",
+  "berat_h4_desc": "Urë guri mbi lumin Osum që lidh Mangalemin me Goricën",
+
+  "theth_description": "Fshat malor thellë në Bjeshkët e Nemuna, Thethi shtrihet në një luginë të rrethuar nga maja gëlqerore. Bujtinat prej guri, kisha e vetmuar dhe kullat e vjetra e bëjnë bazën klasike për ecje në veri të Shqipërisë, përfshirë shtegun përmes qafës drejt Valbonës.",
+  "theth_location": "Shqipëria e Veriut, Qarku i Shkodrës",
+  "theth_best_time": "Qershor – Shtator",
+  "theth_h1_name": "Shtegu Theth – Valbonë",
+  "theth_h1_desc": "Ecje një ditë e plotë përmes Qafës së Valbonës, mes dy luginave malore",
+  "theth_h2_name": "Syri i Kaltër i Thethit",
+  "theth_h2_desc": "Pellg i kristaltë ngjyrë bruz, i ushqyer nga burime malore",
+  "theth_h3_name": "Ujëvara e Grunasit",
+  "theth_h3_desc": "Ujëvarë e lartë, pak minuta në këmbë nga qendra e fshatit",
+  "theth_h4_name": "Kulla e Ngujimit",
+  "theth_h4_desc": "Kullë guri që dikur shërbente si strehë gjatë gjakmarrjes"
 }

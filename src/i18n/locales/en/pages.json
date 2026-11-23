@@ -202,5 +202,10 @@
   "fpsup_c3_title": "Agency inquiries by WhatsApp",
   "fpsup_c3_desc": "For deal-specific questions, message the agency directly on WhatsApp — replies come straight from the people running that offer.",
   "fpsup_c4_title": "Always reachable",
-  "fpsup_c4_desc": "Whichever channel you pick, support isn't limited to office hours — reach out whenever a question comes up, day or night."
+  "fpsup_c4_desc": "Whichever channel you pick, support isn't limited to office hours — reach out whenever a question comes up, day or night.",
+  "credits_title": "Photo credits",
+  "credits_intro": "Some photos on BalkanExplorer come from Wikimedia Commons under open licences. Thank you to the photographers who shared them.",
+  "credits_photo": "Photo",
+  "credits_author": "Author",
+  "credits_license": "Licence"
 }
