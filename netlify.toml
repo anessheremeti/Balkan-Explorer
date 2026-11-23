@@ -104,6 +104,11 @@
   status = 200
 
 [[redirects]]
+  from = "/photo-credits"
+  to = "/app-shell.html"
+  status = 200
+
+[[redirects]]
   from = "/login"
   to = "/app-shell.html"
   status = 200

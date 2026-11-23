@@ -93,5 +93,29 @@
   "skopje_h3_name": "Museum of Modern Art",
   "skopje_h3_desc": "Impressive contemporary art collection",
   "skopje_h4_name": "Memorial Statues",
-  "skopje_h4_desc": "Iconic monuments throughout the city"
+  "skopje_h4_desc": "Iconic monuments throughout the city",
+
+  "berat_description": "Known as the 'City of a Thousand Windows', Berat is a UNESCO World Heritage town where white Ottoman houses climb the hillside above the Osum River. Its castle is still lived in, and the old quarters of Mangalem and Gorica face each other across a stone bridge.",
+  "berat_location": "Central Albania",
+  "berat_best_time": "April to October",
+  "berat_h1_name": "Berat Castle",
+  "berat_h1_desc": "A hilltop citadel that people still live in, with Byzantine churches inside its walls",
+  "berat_h2_name": "Mangalem Quarter",
+  "berat_h2_desc": "Rows of Ottoman houses whose windows give the town its nickname",
+  "berat_h3_name": "Onufri Museum",
+  "berat_h3_desc": "Icons by the 16th-century painter Onufri, inside the Church of the Dormition",
+  "berat_h4_name": "Gorica Bridge",
+  "berat_h4_desc": "Stone bridge over the Osum River linking Mangalem and Gorica",
+
+  "theth_description": "A mountain village deep in the Accursed Mountains, Theth sits in a valley ringed by limestone peaks. Stone guesthouses, a lone church and old stone tower houses make it the classic base for hiking in northern Albania, including the trail over the pass to Valbona.",
+  "theth_location": "Northern Albania, Shkodër County",
+  "theth_best_time": "June to September",
+  "theth_h1_name": "Theth to Valbona Trail",
+  "theth_h1_desc": "A full-day hike over the Valbona Pass between two mountain valleys",
+  "theth_h2_name": "Blue Eye of Theth",
+  "theth_h2_desc": "A clear turquoise pool fed by mountain springs",
+  "theth_h3_name": "Grunas Waterfall",
+  "theth_h3_desc": "A tall waterfall a short walk from the village centre",
+  "theth_h4_name": "Lock-in Tower",
+  "theth_h4_desc": "A stone tower house once used as a refuge during blood feuds"
 }

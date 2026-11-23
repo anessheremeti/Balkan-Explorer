@@ -1,4 +1,15 @@
 import i18n from "../i18n/index.js";
+import berat1 from "../assets/destinations/berat-1.webp";
+import berat2 from "../assets/destinations/berat-2.webp";
+import berat3 from "../assets/destinations/berat-3.webp";
+import berat4 from "../assets/destinations/berat-4.webp";
+import theth1 from "../assets/destinations/theth-1.webp";
+import theth2 from "../assets/destinations/theth-2.webp";
+import theth3 from "../assets/destinations/theth-3.webp";
+import theth4 from "../assets/destinations/theth-4.webp";
+
+const beratPhotos = [berat1, berat2, berat3, berat4];
+const thethPhotos = [theth1, theth2, theth3, theth4];
 
 export interface Highlight {
   name: string;
@@ -302,6 +313,48 @@ const mockDestinations: Record<string, DestinationKeys> = {
     avg_budget: "$40-60 per day",
     language: "Macedonian",
     currency: "Macedonian Denar (MKD)",
+    timezone: "UTC+1 (CET)",
+  },
+  // Photos are local (Wikimedia Commons, credited on /photo-credits). No rating
+  // or places_count yet: the detail page hides that row until real data exists.
+  "9": {
+    id: "9",
+    name: "Berat",
+    country: "Albania",
+    descKey: "berat_description",
+    locationKey: "berat_location",
+    bestTimeKey: "berat_best_time",
+    hero_image: beratPhotos[0],
+    images: beratPhotos,
+    highlightKeys: [
+      { nameKey: "berat_h1_name", descKey: "berat_h1_desc" },
+      { nameKey: "berat_h2_name", descKey: "berat_h2_desc" },
+      { nameKey: "berat_h3_name", descKey: "berat_h3_desc" },
+      { nameKey: "berat_h4_name", descKey: "berat_h4_desc" },
+    ],
+    avg_budget: "$30-45 per day",
+    language: "Albanian",
+    currency: "Albanian Lek (ALL)",
+    timezone: "UTC+1 (CET)",
+  },
+  "10": {
+    id: "10",
+    name: "Theth",
+    country: "Albania",
+    descKey: "theth_description",
+    locationKey: "theth_location",
+    bestTimeKey: "theth_best_time",
+    hero_image: thethPhotos[0],
+    images: thethPhotos,
+    highlightKeys: [
+      { nameKey: "theth_h1_name", descKey: "theth_h1_desc" },
+      { nameKey: "theth_h2_name", descKey: "theth_h2_desc" },
+      { nameKey: "theth_h3_name", descKey: "theth_h3_desc" },
+      { nameKey: "theth_h4_name", descKey: "theth_h4_desc" },
+    ],
+    avg_budget: "$35-55 per day",
+    language: "Albanian",
+    currency: "Albanian Lek (ALL)",
     timezone: "UTC+1 (CET)",
   },
 };

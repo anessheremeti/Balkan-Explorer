@@ -20,7 +20,7 @@ export const BALKAN_DESTINATIONS: readonly BalkanRegion[] = [
     cities: [
       'Tirana', 'Durrës', 'Shkodër', 'Vlorë', 'Elbasan',
       'Berat', 'Gjirokastër', 'Korçë', 'Fier', 'Sarandë',
-      'Pogradec', 'Lushnjë', 'Kavajë', 'Lezhë', 'Kukës', 'Laç',
+      'Pogradec', 'Lushnjë', 'Kavajë', 'Lezhë', 'Kukës', 'Laç', 'Theth',
     ],
   },
   {
